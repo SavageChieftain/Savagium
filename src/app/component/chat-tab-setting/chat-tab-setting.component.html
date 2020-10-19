@@ -3,22 +3,40 @@
     <div>
       <button (click)="create()">チャットタブを作る</button>
     </div>
-    <select style="width: 10em;" size="10" (change)="onChangeSelectTab($event.target.value)" [ngModel]="selectedTab?.identifier">
-      <option *ngFor="let chatTab of chatTabs" value="{{chatTab.identifier}}">{{chatTab.name}}</option>
+    <select
+      style="width: 10em"
+      size="10"
+      (change)="onChangeSelectTab($event.target.value)"
+      [ngModel]="selectedTab?.identifier"
+    >
+      <option *ngFor="let chatTab of chatTabs" value="{{ chatTab.identifier }}">
+        {{ chatTab.name }}
+      </option>
     </select>
   </div>
   <div class="flex-item">
     <ng-container *ngIf="!isEmpty && selectedTab">
-      <div>タブ名 :
-        <input [(ngModel)]="tabName" placeholder="Name" [attr.disabled]="!isEditable ? '' : null" />
+      <div>
+        タブ名 :
+        <input
+          [(ngModel)]="tabName"
+          placeholder="Name"
+          [attr.disabled]="!isEditable ? '' : null"
+        />
       </div>
-      <hr/>
+      <hr />
       <div>
         <ng-container *ngIf="!isDeleted">
           <button (click)="upTabIndex()">↑</button>
           <button (click)="downTabIndex()">↓</button>
           <button (click)="save()">保存</button>
-          <button class="danger" (click)="delete()" [attr.disabled]="chatTabs.length <= 1 ? '' : null">削除</button>
+          <button
+            class="danger"
+            (click)="delete()"
+            [attr.disabled]="chatTabs.length <= 1 ? '' : null"
+          >
+            削除
+          </button>
         </ng-container>
         <ng-container *ngIf="isDeleted">
           <button (click)="restore()">元に戻す</button>
@@ -28,5 +46,7 @@
   </div>
 </div>
 <ng-container *ngIf="isEmpty">
-  <div style="font-size: 12px;">※チャットタブが１つも作成されていません。「チャットタブを作る」からチャットタブを作成することができます。</div>
+  <div style="font-size: 12px">
+    ※チャットタブが１つも作成されていません。「チャットタブを作る」からチャットタブを作成することができます。
+  </div>
 </ng-container>

@@ -26,7 +26,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'game-character',
   templateUrl: './game-character.component.html',
-  styleUrls: ['./game-character.component.css'],
+  styleUrls: ['./game-character.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('bounceInOut', [

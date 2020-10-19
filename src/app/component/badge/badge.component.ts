@@ -4,7 +4,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 @Component({
   selector: 'badge',
   templateUrl: './badge.component.html',
-  styleUrls: ['./badge.component.css'],
+  styleUrls: ['./badge.component.scss'],
   animations: [
     trigger('bounce', [
       state('active', style({ transform: '' })),

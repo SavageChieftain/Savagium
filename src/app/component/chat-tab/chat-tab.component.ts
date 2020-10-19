@@ -32,7 +32,7 @@ const isiOS = ua.indexOf('iphone') > -1 || ua.indexOf('ipad') > -1 || ua.indexOf
 @Component({
   selector: 'chat-tab',
   templateUrl: './chat-tab.component.html',
-  styleUrls: ['./chat-tab.component.css'],
+  styleUrls: ['./chat-tab.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatTabComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges, AfterViewChecked {

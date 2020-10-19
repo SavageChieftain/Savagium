@@ -10,7 +10,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'file-storage',
   templateUrl: './file-storage.component.html',
-  styleUrls: ['./file-storage.component.css'],
+  styleUrls: ['./file-storage.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {

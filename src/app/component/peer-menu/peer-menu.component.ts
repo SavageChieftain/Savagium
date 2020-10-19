@@ -14,7 +14,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'peer-menu',
   templateUrl: './peer-menu.component.html',
-  styleUrls: ['./peer-menu.component.css']
+  styleUrls: ['./peer-menu.component.scss']
 })
 export class PeerMenuComponent implements OnInit, OnDestroy, AfterViewInit {
 

@@ -43,14 +43,16 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
   }
 
   private initialize() {
-    this.ngZone.runOutsideAngular(() => {
-      this.input = new InputHandler(this.elementRef.nativeElement);
-      window.addEventListener('resize', this.callbackOnResize, false);
-    });
-    this.input.onStart = this.onInputStart.bind(this);
-    this.input.onMove = this.onInputMove.bind(this);
-    this.input.onEnd = this.onInputEnd.bind(this);
-    this.input.onContextMenu = this.onContextMenu.bind(this);
+    if (!this.isDisable) {
+      this.ngZone.runOutsideAngular(() => {
+        this.input = new InputHandler(this.elementRef.nativeElement);
+        window.addEventListener('resize', this.callbackOnResize, false);
+      });
+      this.input.onStart = this.onInputStart.bind(this);
+      this.input.onMove = this.onInputMove.bind(this);
+      this.input.onEnd = this.onInputEnd.bind(this);
+      this.input.onContextMenu = this.onContextMenu.bind(this);
+    }
   }
 
   cancel() {
@@ -82,33 +84,35 @@ export class DraggableDirective implements AfterViewInit, OnDestroy {
   }
 
   private onInputMove(e: MouseEvent | TouchEvent) {
-    let trans = {
-      x: this.input.pointer.x - this.startPointer.x,
-      y: this.input.pointer.y - this.startPointer.y,
-      z: this.input.pointer.z - this.startPointer.z
-    };
+    if (!this.isDisable) {
+      let trans = {
+        x: this.input.pointer.x - this.startPointer.x,
+        y: this.input.pointer.y - this.startPointer.y,
+        z: this.input.pointer.z - this.startPointer.z
+      };
 
-    let diff = {
-      x: trans.x - this.prevTrans.x,
-      y: trans.y - this.prevTrans.y,
-      z: trans.z - this.prevTrans.z
-    };
+      let diff = {
+        x: trans.x - this.prevTrans.x,
+        y: trans.y - this.prevTrans.y,
+        z: trans.z - this.prevTrans.z
+      };
 
-    let correction = this.calcCorrectionPosition(diff);
-    trans.x += correction.x;
-    trans.y += correction.y;
-    trans.z += correction.z;
+      let correction = this.calcCorrectionPosition(diff);
+      trans.x += correction.x;
+      trans.y += correction.y;
+      trans.z += correction.z;
 
-    if (0 < trans.x ** 2 + trans.y ** 2 + trans.z ** 2) {
-      this.elementRef.nativeElement.style.opacity = this.opacity + '';
+      if (0 < trans.x ** 2 + trans.y ** 2 + trans.z ** 2) {
+        this.elementRef.nativeElement.style.opacity = this.opacity + '';
+      }
+
+      this.elementRef.nativeElement.style.left = trans.x + this.startPosition.x + 'px';
+      this.elementRef.nativeElement.style.top = trans.y + this.startPosition.y + 'px';
+
+      this.prevTrans = trans;
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
     }
-
-    this.elementRef.nativeElement.style.left = trans.x + this.startPosition.x + 'px';
-    this.elementRef.nativeElement.style.top = trans.y + this.startPosition.y + 'px';
-
-    this.prevTrans = trans;
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
   }
 
   private onInputEnd(e: MouseEvent | TouchEvent) {

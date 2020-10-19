@@ -15,7 +15,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'text-note',
   templateUrl: './text-note.component.html',
-  styleUrls: ['./text-note.component.css'],
+  styleUrls: ['./text-note.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TextNoteComponent implements OnInit, OnDestroy, AfterViewInit {

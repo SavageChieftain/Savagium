@@ -14,7 +14,7 @@ import { PanelOption, PanelService } from 'service/panel.service';
 @Component({
   selector: 'card-stack-list',
   templateUrl: './card-stack-list.component.html',
-  styleUrls: ['./card-stack-list.component.css'],
+  styleUrls: ['./card-stack-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CardStackListComponent implements OnInit, OnDestroy {

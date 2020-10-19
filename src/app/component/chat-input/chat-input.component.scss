@@ -1,15 +1,31 @@
+@import "~@ng-select/ng-select/themes/default.theme.css";
+
 .table {
   box-sizing: border-box;
-  padding : 5px;
-  /*position : fixed;*/
-  /*bottom : 0;*/
-  display: table;
-  /*width: calc(100% - 30px);*/
+  padding: 5px;
+  display: flex;
   width: 100%;
-}
-
-.table .table-cell {
-  display: table-cell;
+  flex-wrap: wrap;
+  .table-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: calc(100% - 50px);
+    flex-wrap: wrap;
+    &.image-wrapper {
+      width: 50px;
+    }
+    .table-cell {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      width: 100%;
+      textarea {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    }
+  }
 }
 
 .imagebox {
@@ -22,7 +38,7 @@
   text-align: center;
 }
 
-.image{
+.image {
   width: 100%;
   height: 100%;
   vertical-align: bottom;
@@ -58,5 +74,5 @@
 
 .direct-message {
   background-color: #555;
-  color: #CCC;
+  color: #ccc;
 }

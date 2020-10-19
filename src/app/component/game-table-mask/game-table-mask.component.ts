@@ -26,7 +26,7 @@ import { TabletopService } from 'service/tabletop.service';
 @Component({
   selector: 'game-table-mask',
   templateUrl: './game-table-mask.component.html',
-  styleUrls: ['./game-table-mask.component.css'],
+  styleUrls: ['./game-table-mask.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit {

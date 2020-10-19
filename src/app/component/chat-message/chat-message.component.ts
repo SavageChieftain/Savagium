@@ -8,7 +8,7 @@ import { ChatMessageService } from 'service/chat-message.service';
 @Component({
   selector: 'chat-message',
   templateUrl: './chat-message.component.html',
-  styleUrls: ['./chat-message.component.css'],
+  styleUrls: ['./chat-message.component.scss'],
   animations: [
     trigger('flyInOut', [
       transition('* => active', [

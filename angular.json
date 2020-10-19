@@ -24,7 +24,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.scss"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
@@ -96,7 +96,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.scss"
             ],
             "scripts": []
           }
@@ -127,6 +127,12 @@
           }
         }
       }
-    }},
-  "defaultProject": "udonarium"
+    }
+  },
+  "defaultProject": "udonarium",
+  "schematics": {
+    "@schematics/angular:component": {
+      "styleext": "scss"
+    }
+  }
 }

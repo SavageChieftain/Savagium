@@ -1,7 +1,7 @@
 nav ul {
-    list-style:none;
-    padding: 0px;
-    margin: 0px;
+  list-style: none;
+  padding: 0px;
+  margin: 0px;
   /*
   border: 1px solid #bbb;
   border-radius: 5px;
@@ -13,7 +13,7 @@ nav ul {
 nav ul > li {
   text-align: center;
   padding: 5px;
-  color: #CCC;
+  color: #ccc;
   color: #444;
 
   cursor: -moz-pointer;
@@ -22,7 +22,7 @@ nav ul > li {
 }
 
 nav ul > li:hover {
-  color: #CCC;
+  color: #ccc;
   background-color: rgba(30, 30, 30, 0.8);
 }
 nav ul > li > a {
@@ -39,7 +39,10 @@ nav ul > li > a > label {
 nav ul i {
   font-size: 24px;
 }
-nav ul a, nav ul a:hover, nav ul a:active, nav ul a:visited {
+nav ul a,
+nav ul a:hover,
+nav ul a:active,
+nav ul a:visited {
   text-decoration: none;
 }
 
@@ -53,9 +56,9 @@ nav ul a, nav ul a:hover, nav ul a:active, nav ul a:visited {
   box-sizing: border-box;
   overflow: auto;
   position: absolute;
-  color: #CCC;
+  color: #ccc;
   background-color: rgba(30, 30, 30, 0.8);
-  border:solid 1px #999;
+  border: solid 1px #999;
   padding: 0px;
   height: 100%;
   width: 300px;
@@ -70,4 +73,40 @@ nav ul a, nav ul a:hover, nav ul a:active, nav ul a:visited {
   right: 3px;
   height: 30px;
   width: 30px;
+}
+
+.mainNavigation {
+  position: fixed;
+  width: 100% !important;
+  height: 100px !important;
+  nav {
+    width: 100%;
+    height: 100%;
+    margin: auto 0;
+    display: flex;
+    align-items: center;
+  }
+  nav ul {
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    li {
+      width: 12.5%;
+      height: 100%;
+      padding: 0;
+      display: flex;
+      a {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
 }

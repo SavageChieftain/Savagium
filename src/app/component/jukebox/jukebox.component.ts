@@ -14,7 +14,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'app-jukebox',
   templateUrl: './jukebox.component.html',
-  styleUrls: ['./jukebox.component.css']
+  styleUrls: ['./jukebox.component.scss']
 })
 export class JukeboxComponent implements OnInit, OnDestroy {
 

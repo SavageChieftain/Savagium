@@ -25,6 +25,8 @@ export class PanelService {
   top: number = 0;
   width: number = 100;
   height: number = 100;
+  navigation: boolean = true;
+  draggable: boolean = true;
 
   scrollablePanel: HTMLDivElement = null;
 
@@ -37,6 +39,7 @@ export class PanelService {
   }
 
   open<T>(childComponent: Type<T>, option?: PanelOption, parentViewContainerRef?: ViewContainerRef): T {
+
     if (!parentViewContainerRef) {
       parentViewContainerRef = PanelService.defaultParentViewContainerRef;
     }

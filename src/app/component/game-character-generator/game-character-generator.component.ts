@@ -16,7 +16,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'game-character-generator',
   templateUrl: './game-character-generator.component.html',
-  styleUrls: ['./game-character-generator.component.css']
+  styleUrls: ['./game-character-generator.component.scss']
 })
 export class GameCharacterGeneratorComponent implements OnInit, OnDestroy, AfterViewInit {
 

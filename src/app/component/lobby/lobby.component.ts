@@ -13,7 +13,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'lobby',
   templateUrl: './lobby.component.html',
-  styleUrls: ['./lobby.component.css'],
+  styleUrls: ['./lobby.component.scss'],
 })
 export class LobbyComponent implements OnInit, OnDestroy {
   rooms: { alias: string, roomName: string, peers: PeerContext[] }[] = [];

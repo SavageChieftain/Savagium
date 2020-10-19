@@ -20,7 +20,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'overview-panel',
   templateUrl: './overview-panel.component.html',
-  styleUrls: ['./overview-panel.component.css'],
+  styleUrls: ['./overview-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('fadeInOut', [

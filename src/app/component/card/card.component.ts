@@ -30,7 +30,7 @@ import { TabletopService } from 'service/tabletop.service';
 @Component({
   selector: 'card',
   templateUrl: './card.component.html',
-  styleUrls: ['./card.component.css'],
+  styleUrls: ['./card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CardComponent implements OnInit, OnDestroy, AfterViewInit {

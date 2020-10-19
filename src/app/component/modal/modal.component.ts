@@ -5,7 +5,7 @@ import { ModalService } from 'service/modal.service';
 @Component({
   selector: 'modal',
   templateUrl: './modal.component.html',
-  styleUrls: ['./modal.component.css'],
+  styleUrls: ['./modal.component.scss'],
   animations: [
     trigger('flyInOut', [
       transition('void => *', [

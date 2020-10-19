@@ -31,7 +31,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'card-stack',
   templateUrl: './card-stack.component.html',
-  styleUrls: ['./card-stack.component.css'],
+  styleUrls: ['./card-stack.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('shuffle', [

@@ -16,7 +16,7 @@ import { SaveDataService } from 'service/save-data.service';
 @Component({
   selector: 'game-table-setting',
   templateUrl: './game-table-setting.component.html',
-  styleUrls: ['./game-table-setting.component.css']
+  styleUrls: ['./game-table-setting.component.scss']
 })
 export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewInit {
   minSize: number = 1;

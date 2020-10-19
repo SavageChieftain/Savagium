@@ -13,7 +13,7 @@ import { DataElement } from '@udonarium/data-element';
 @Component({
   selector: 'game-data-element, [game-data-element]',
   templateUrl: './game-data-element.component.html',
-  styleUrls: ['./game-data-element.component.css'],
+  styleUrls: ['./game-data-element.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameDataElementComponent implements OnInit, OnDestroy, AfterViewInit {

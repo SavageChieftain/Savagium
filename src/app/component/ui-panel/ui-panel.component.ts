@@ -6,7 +6,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'ui-panel',
   templateUrl: './ui-panel.component.html',
-  styleUrls: ['./ui-panel.component.css'],
+  styleUrls: ['./ui-panel.component.scss'],
   providers: [
     PanelService,
   ],
@@ -34,19 +34,21 @@ export class UIPanelComponent implements OnInit {
   @Input() set top(top: number) { this.panelService.top = top; }
   @Input() set width(width: number) { this.panelService.width = width; }
   @Input() set height(height: number) { this.panelService.height = height; }
+  @Input() set navigation(navigation: boolean) { this.panelService.navigation = navigation;}
+  @Input() set draggable(draggable: boolean) { this.panelService.draggable = draggable; }
 
   get title(): string { return this.panelService.title; }
   get left() { return this.panelService.left; }
   get top() { return this.panelService.top; }
   get width() { return this.panelService.width; }
   get height() { return this.panelService.height; }
+  get navigation() { return this.panelService.navigation; }
+  get draggable() { return this.panelService.draggable; }
 
   private preLeft: number = 0
   private preTop: number = 0;
   private preWidth: number = 100;
   private preHeight: number = 100;
-
-  private isFullScreen: boolean = false;
 
   get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging; }
 
@@ -58,19 +60,22 @@ export class UIPanelComponent implements OnInit {
   ngOnInit() {
     this.panelService.scrollablePanel = this.scrollablePanel.nativeElement;
   }
-
-  toggleFullScreen() {
-    let panel = this.draggablePanel.nativeElement;
+  checkFullScreenState(panel: HTMLElement): boolean {
     if (panel.offsetLeft <= 0
       && panel.offsetTop <= 0
       && panel.offsetWidth >= window.innerWidth
       && panel.offsetHeight >= window.innerHeight) {
-      this.isFullScreen = false;
-    } else {
-      this.isFullScreen = true;
+      return false;
     }
-
-    if (this.isFullScreen) {
+    return true;
+  }
+  toggleFullScreen() {
+    const panel = this.draggablePanel.nativeElement;
+    this.left = this.preLeft;
+    this.top = this.preTop;
+    this.width = this.preWidth;
+    this.height = this.preHeight;
+    if (this.checkFullScreenState(panel)) {
       this.preLeft = panel.offsetLeft;
       this.preTop = panel.offsetTop;
       this.preWidth = panel.offsetWidth;
@@ -85,11 +90,6 @@ export class UIPanelComponent implements OnInit {
       panel.style.top = this.top + 'px';
       panel.style.width = this.width + 'px';
       panel.style.height = this.height + 'px';
-    } else {
-      this.left = this.preLeft;
-      this.top = this.preTop;
-      this.width = this.preWidth;
-      this.height = this.preHeight;
     }
   }
 

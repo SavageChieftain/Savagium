@@ -28,7 +28,7 @@ import { TableTouchGesture, TableTouchGestureEvent } from './table-touch-gesture
 @Component({
   selector: 'game-table',
   templateUrl: './game-table.component.html',
-  styleUrls: ['./game-table.component.css'],
+  styleUrls: ['./game-table.component.scss'],
   providers: [
     TabletopService,
   ],

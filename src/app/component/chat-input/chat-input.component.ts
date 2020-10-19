@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ChatMessage } from '@udonarium/chat-message';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
@@ -15,7 +15,8 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'chat-input',
   templateUrl: './chat-input.component.html',
-  styleUrls: ['./chat-input.component.css']
+  styleUrls: ['./chat-input.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class ChatInputComponent implements OnInit, OnDestroy {
   @ViewChild('textArea', { static: true }) textAreaElementRef: ElementRef;

@@ -56,16 +56,18 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
   }
 
   private initialize() {
-    this.ngZone.runOutsideAngular(() => {
-      this.handleTypes.forEach(type => {
-        let handle = new ResizeHandler(this.elementRef.nativeElement, type);
-        this.handleMap.set(type, handle);
-        handle.input.onStart = ev => this.onResizeStart(ev, handle);
-        handle.input.onMove = ev => this.onResizeMove(ev, handle);
-        handle.input.onEnd = ev => this.onResizeEnd(ev, handle);
-        handle.input.onContextMenu = ev => this.onContextMenu(ev, handle);
+    if (!this.isDisable) {
+      this.ngZone.runOutsideAngular(() => {
+        this.handleTypes.forEach(type => {
+          let handle = new ResizeHandler(this.elementRef.nativeElement, type);
+          this.handleMap.set(type, handle);
+          handle.input.onStart = ev => this.onResizeStart(ev, handle);
+          handle.input.onMove = ev => this.onResizeMove(ev, handle);
+          handle.input.onEnd = ev => this.onResizeEnd(ev, handle);
+          handle.input.onContextMenu = ev => this.onContextMenu(ev, handle);
+        });
       });
-    });
+    }
   }
 
   cancel() {
@@ -90,78 +92,80 @@ export class ResizableDirective implements AfterViewInit, OnDestroy {
   }
 
   private onResizeMove(e: MouseEvent | TouchEvent, handle: ResizeHandler) {
-    let trans: BoxSize = {
-      left: 0,
-      top: 0,
-      width: handle.input.pointer.x - this.startPointer.x,
-      height: handle.input.pointer.y - this.startPointer.y
-    };
+    if (!this.isDisable) {
+      let trans: BoxSize = {
+        left: 0,
+        top: 0,
+        width: handle.input.pointer.x - this.startPointer.x,
+        height: handle.input.pointer.y - this.startPointer.y
+      };
 
-    switch (handle.type) {
-      case HandleType.N:
-      case HandleType.S:
-        trans.width = 0;
-        break;
-      case HandleType.E:
-      case HandleType.W:
-        trans.height = 0;
-        break;
+      switch (handle.type) {
+        case HandleType.N:
+        case HandleType.S:
+          trans.width = 0;
+          break;
+        case HandleType.E:
+        case HandleType.W:
+          trans.height = 0;
+          break;
+      }
+
+      switch (handle.type) {
+        case HandleType.SW:
+          trans.left = trans.width;
+          trans.width *= -1;
+          break;
+        case HandleType.NE:
+          trans.top = trans.height;
+          trans.height *= -1;
+          break;
+        case HandleType.E:
+        case HandleType.S:
+        case HandleType.SE:
+          break;
+        case HandleType.N:
+        case HandleType.W:
+        case HandleType.NW:
+          trans.left = trans.width;
+          trans.top = trans.height;
+          trans.width *= -1;
+          trans.height *= -1;
+          break;
+      }
+
+      if (trans.width + this.startPosition.width < this.minWidth) {
+        trans.width = this.minWidth - this.startPosition.width;
+        trans.left = trans.left !== 0 ? -trans.width : trans.left;
+      }
+
+      if (trans.height + this.startPosition.height < this.minHeight) {
+        trans.height = this.minHeight - this.startPosition.height;
+        trans.top = trans.top !== 0 ? -trans.height : trans.top;
+      }
+
+      let diff: BoxSize = {
+        left: trans.left - this.prevTrans.left,
+        top: trans.top - this.prevTrans.top,
+        width: trans.width - this.prevTrans.width,
+        height: trans.height - this.prevTrans.height
+      };
+
+      let correction = this.calcCorrectionPosition(diff);
+      trans.left += correction.left;
+      trans.top += correction.top;
+      trans.width += correction.width;
+      trans.height += correction.height;
+
+      this.elementRef.nativeElement.style.left = trans.left + this.startPosition.left + 'px';
+      this.elementRef.nativeElement.style.top = trans.top + this.startPosition.top + 'px';
+      this.elementRef.nativeElement.style.width = trans.width + this.startPosition.width + 'px';
+      this.elementRef.nativeElement.style.height = trans.height + this.startPosition.height + 'px';
+
+      this.prevTrans = trans;
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
     }
-
-    switch (handle.type) {
-      case HandleType.SW:
-        trans.left = trans.width;
-        trans.width *= -1;
-        break;
-      case HandleType.NE:
-        trans.top = trans.height;
-        trans.height *= -1;
-        break;
-      case HandleType.E:
-      case HandleType.S:
-      case HandleType.SE:
-        break;
-      case HandleType.N:
-      case HandleType.W:
-      case HandleType.NW:
-        trans.left = trans.width;
-        trans.top = trans.height;
-        trans.width *= -1;
-        trans.height *= -1;
-        break;
-    }
-
-    if (trans.width + this.startPosition.width < this.minWidth) {
-      trans.width = this.minWidth - this.startPosition.width;
-      trans.left = trans.left !== 0 ? -trans.width : trans.left;
-    }
-
-    if (trans.height + this.startPosition.height < this.minHeight) {
-      trans.height = this.minHeight - this.startPosition.height;
-      trans.top = trans.top !== 0 ? -trans.height : trans.top;
-    }
-
-    let diff: BoxSize = {
-      left: trans.left - this.prevTrans.left,
-      top: trans.top - this.prevTrans.top,
-      width: trans.width - this.prevTrans.width,
-      height: trans.height - this.prevTrans.height
-    };
-
-    let correction = this.calcCorrectionPosition(diff);
-    trans.left += correction.left;
-    trans.top += correction.top;
-    trans.width += correction.width;
-    trans.height += correction.height;
-
-    this.elementRef.nativeElement.style.left = trans.left + this.startPosition.left + 'px';
-    this.elementRef.nativeElement.style.top = trans.top + this.startPosition.top + 'px';
-    this.elementRef.nativeElement.style.width = trans.width + this.startPosition.width + 'px';
-    this.elementRef.nativeElement.style.height = trans.height + this.startPosition.height + 'px';
-
-    this.prevTrans = trans;
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
   }
 
   private onResizeEnd(e: MouseEvent | TouchEvent, handle: ResizeHandler) {

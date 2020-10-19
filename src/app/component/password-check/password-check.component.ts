@@ -8,7 +8,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'password-check',
   templateUrl: './password-check.component.html',
-  styleUrls: ['./password-check.component.css']
+  styleUrls: ['./password-check.component.scss']
 })
 export class PasswordCheckComponent implements OnInit, OnDestroy {
   password: string = '';

@@ -19,7 +19,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'game-object-inventory',
   templateUrl: './game-object-inventory.component.html',
-  styleUrls: ['./game-object-inventory.component.css'],
+  styleUrls: ['./game-object-inventory.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameObjectInventoryComponent implements OnInit, AfterViewInit, OnDestroy {

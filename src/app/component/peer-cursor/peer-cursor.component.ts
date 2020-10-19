@@ -10,7 +10,7 @@ import { TabletopService } from 'service/tabletop.service';
 @Component({
   selector: 'peer-cursor, [peer-cursor]',
   templateUrl: './peer-cursor.component.html',
-  styleUrls: ['./peer-cursor.component.css']
+  styleUrls: ['./peer-cursor.component.scss']
 })
 export class PeerCursorComponent implements OnInit, AfterViewInit, OnDestroy {
 

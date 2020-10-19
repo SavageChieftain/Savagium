@@ -17,7 +17,7 @@ import { TabletopService } from 'service/tabletop.service';
 @Component({
   selector: 'terrain',
   templateUrl: './terrain.component.html',
-  styleUrls: ['./terrain.component.css'],
+  styleUrls: ['./terrain.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {

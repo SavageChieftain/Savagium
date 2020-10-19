@@ -16,7 +16,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'file-selector',
   templateUrl: './file-selecter.component.html',
-  styleUrls: ['./file-selecter.component.css'],
+  styleUrls: ['./file-selecter.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FileSelecterComponent implements OnInit, OnDestroy, AfterViewInit {

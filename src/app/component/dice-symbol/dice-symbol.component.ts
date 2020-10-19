@@ -29,7 +29,7 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 @Component({
   selector: 'dice-symbol',
   templateUrl: './dice-symbol.component.html',
-  styleUrls: ['./dice-symbol.component.css'],
+  styleUrls: ['./dice-symbol.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('diceRoll', [

@@ -2,7 +2,7 @@ import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@ang
 import { ChatPalette } from '@udonarium/chat-palette';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
-import { EventSystem } from '@udonarium/core/system';
+import { EventSystem, Network } from '@udonarium/core/system';
 import { DiceBot } from '@udonarium/dice-bot';
 import { GameCharacter } from '@udonarium/game-character';
 import { PeerCursor } from '@udonarium/peer-cursor';
@@ -13,7 +13,7 @@ import { PanelService } from 'service/panel.service';
 @Component({
   selector: 'chat-palette',
   templateUrl: './chat-palette.component.html',
-  styleUrls: ['./chat-palette.component.css']
+  styleUrls: ['./chat-palette.component.scss']
 })
 export class ChatPaletteComponent implements OnInit, OnDestroy {
   @ViewChild('chatInput', { static: true }) chatInputComponent: ChatInputComponent;
@@ -53,6 +53,35 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     public chatMessageService: ChatMessageService,
     private panelService: PanelService
   ) { }
+
+  private shouldUpdateCharacterList: boolean = true;
+  private _gameCharacters: GameCharacter[] = [];
+  get gameCharacters(): GameCharacter[] {
+    if (this.shouldUpdateCharacterList) {
+      this.shouldUpdateCharacterList = false;
+      this._gameCharacters = ObjectStore.instance
+        .getObjects<GameCharacter>(GameCharacter)
+        .filter(character => this.allowsChat(character));
+    }
+    return this._gameCharacters;
+  }
+
+  private allowsChat(gameCharacter: GameCharacter): boolean {
+    switch (gameCharacter.location.name) {
+      case 'table':
+      case this.myPeer.peerId:
+        return true;
+      case 'graveyard':
+        return false;
+      default:
+        for (const conn of Network.peerContexts) {
+          if (conn.isOpen && gameCharacter.location.name === conn.fullstring) {
+            return false;
+          }
+        }
+        return true;
+    }
+  }
 
   ngOnInit() {
     Promise.resolve().then(() => this.updatePanelTitle());
