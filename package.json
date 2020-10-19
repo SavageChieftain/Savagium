@@ -7,10 +7,10 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint",
     "e2e": "ng e2e",
     "format:fix": "pretty-quick --staged",
-    "precommit": "run-s format:fix lint"
+    "precommit": "run-s format:fix lint",
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
