@@ -8,9 +8,9 @@
     "build": "ng build",
     "test": "ng test",
     "e2e": "ng e2e",
+    "lint": "ng lint",
     "format:fix": "pretty-quick --staged",
-    "precommit": "run-s format:fix lint",
-    "lint": "ng lint"
+    "pre-commit": "run-s format:fix lint"
   },
   "private": true,
   "dependencies": {
