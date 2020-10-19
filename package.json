@@ -1,6 +1,6 @@
 {
-  "name": "udonarium",
-  "version": "1.11.3",
+  "name": "savagium",
+  "version": "0.51.3",
   "license": "MIT",
   "scripts": {
     "ng": "ng",
