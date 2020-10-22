@@ -11,10 +11,11 @@
   <div class="table-row">
     <div class="table-cell">
       <ng-select
+        *ngIf="onlyCharacters === false"
         style="width: 14em"
         [(ngModel)]="sendFrom"
         [clearable]="false"
-        [dropdownPosition]="'top'"
+        [dropdownPosition]="onlyCharacters === false ? 'top' : 'bottom'"
       >
         <ng-option *ngIf="!onlyCharacters" value="{{ myPeer?.identifier }}"
           >{{ myPeer?.name }}（あなた）</ng-option
@@ -26,12 +27,13 @@
           {{ gameCharacter.name }}</ng-option
         >
       </ng-select>
-      to
+      <span *ngIf="onlyCharacters === false">to</span>
+      <span *ngIf="onlyCharacters === true">Target:</span>
       <ng-select
         style="width: 10em"
         [(ngModel)]="sendTo"
         [clearable]="false"
-        [dropdownPosition]="'top'"
+        [dropdownPosition]="onlyCharacters === false ? 'top' : 'bottom'"
       >
         <ng-option value="">全員</ng-option>
         <ng-option *ngFor="let peer of otherPeers" value="{{ peer.identifier }}"
@@ -45,13 +47,12 @@
         [(ngModel)]="gameType"
         [ngModelOptions]="{ standalone: true }"
         [clearable]="false"
-        [dropdownPosition]="'top'"
+        [dropdownPosition]="onlyCharacters === false ? 'top' : 'bottom'"
       >
-        <ng-option value="">ダイスボット指定なし</ng-option>
         <ng-option
           *ngFor="let diceBotInfo of diceBotInfos"
-          value="{{ diceBotInfo.script }}"
-          >{{ diceBotInfo.game }}
+          value="{{ diceBotInfo.gameType }}"
+          >{{ diceBotInfo.gameName }}
         </ng-option>
       </ng-select>
       <button (click)="showDicebotHelp()">?</button>

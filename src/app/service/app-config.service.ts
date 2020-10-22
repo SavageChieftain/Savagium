@@ -1,162 +1,178 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core'
 
-import { EventSystem, Network } from '@udonarium/core/system';
-import { Database } from '@udonarium/database/database';
+import { EventSystem, Network } from '@udonarium/core/system'
+import { Database } from '@udonarium/database/database'
 
-import * as yaml from 'js-yaml/dist/js-yaml.min.js';
+import * as yaml from 'js-yaml/dist/js-yaml.min.js'
 
 export interface AppConfig {
   webrtc: {
-    key: string,
+    key: string
     config?: {
-      iceServers?: RTCIceServer[],
+      iceServers?: RTCIceServer[]
       certificates?: string
     }
-  },
+  }
   app: {
-    title: string,
+    title: string
     mode: string
   }
 }
 
 @Injectable()
 export class AppConfigService {
+  constructor() {}
 
-  constructor() { }
-
-  peerHistory: string[] = [];
-  isOpen: boolean = false;
+  peerHistory: string[] = []
+  isOpen: boolean = false
 
   static appConfig: AppConfig = {
     webrtc: {
-      key: ''
+      key: '',
     },
     app: {
       title: '',
-      mode: ''
-    }
+      mode: '',
+    },
   }
 
   initialize() {
-    this.initAppConfig();
-    this.initDatabase();
+    this.initAppConfig()
+    this.initDatabase()
   }
 
   private async initDatabase() {
-    console.log('initDatabase...');
+    console.log('initDatabase...')
     if (!window.indexedDB) {
-      console.warn('このブラウザは安定板の IndexedDB をサポートしていません。IndexedDB の機能は利用できません。');
-      return;
+      console.warn(
+        'このブラウザは安定板の IndexedDB をサポートしていません。IndexedDB の機能は利用できません。',
+      )
+      return
     }
 
-    let db = new Database();
+    let db = new Database()
 
-    let history = await db.getPeerHistory();
+    let history = await db.getPeerHistory()
     history.sort((a, b) => {
-      if (a.timestamp < b.timestamp) return 1;
-      if (a.timestamp > b.timestamp) return -1;
-      return 0;
-    });
+      if (a.timestamp < b.timestamp) return 1
+      if (a.timestamp > b.timestamp) return -1
+      return 0
+    })
 
     for (let i = 1; i < history.length; i++) {
-      db.deletePeerHistory(history[i].peerId);
+      db.deletePeerHistory(history[i].peerId)
     }
 
-    console.log('履歴: ', history);
+    console.log('履歴: ', history)
 
-    this.peerHistory = [];
+    this.peerHistory = []
     if (history.length) {
       for (let historyId of history[0].history) {
         if (historyId !== history[0].peerId) {
-          this.peerHistory.push(historyId);
+          this.peerHistory.push(historyId)
         }
       }
     }
-    console.log('最終履歴: ', this.peerHistory);
+    console.log('最終履歴: ', this.peerHistory)
 
     EventSystem.register(this)
       .on('CONNECT_PEER', -1000, () => {
-        console.log('AppConfigService CONNECT_PEER', Network.peerIds);
+        console.log('AppConfigService CONNECT_PEER', Network.peerIds)
         if (!this.isOpen) {
-          this.isOpen = true;
+          this.isOpen = true
         }
-        db.addPeerHistory(Network.peerId, Network.peerIds);
+        db.addPeerHistory(Network.peerId, Network.peerIds)
       })
       .on('DISCONNECT_PEER', -1000, () => {
-        console.log('AppConfigService DISCONNECT_PEER', Network.peerIds);
-      });
+        console.log('AppConfigService DISCONNECT_PEER', Network.peerIds)
+      })
   }
 
   private async initAppConfig() {
     try {
-      console.log('YAML読み込み...');
-      let config = await this.loadYaml();
-      let obj = yaml.safeLoad(config);
-      AppConfigService.applyConfig(obj);
-      console.log(AppConfigService.appConfig);
+      console.log('YAML読み込み...')
+      let config = await this.loadYaml()
+      let obj = yaml.safeLoad(config)
+      AppConfigService.applyConfig(obj)
+      console.log(AppConfigService.appConfig)
     } catch (e) {
-      console.warn(e);
+      console.warn(e)
     }
-    EventSystem.trigger('LOAD_CONFIG', AppConfigService.appConfig);
+    EventSystem.trigger('LOAD_CONFIG', AppConfigService.appConfig)
   }
 
   private loadYaml(): Promise<string> {
     return new Promise((resolve, reject) => {
-      let config = document.querySelector('script[type$="yaml"]');
+      let config = document.querySelector('script[type$="yaml"]')
       if (!config) {
-        console.warn('loadYaml element not found.');
-        resolve('');
-        return;
+        console.warn('loadYaml element not found.')
+        resolve('')
+        return
       }
 
-      console.log('loadYaml ready...', config);
-      let configString = config.textContent;
-      let url = config.getAttribute('src');
+      console.log('loadYaml ready...', config)
+      let configString = config.textContent
+      let url = config.getAttribute('src')
 
       if (url == null) {
-        console.warn('loadYaml url undefined.');
-        resolve(configString);
-        return;
+        console.warn('loadYaml url undefined.')
+        resolve(configString)
+        return
       }
 
-      let http = new XMLHttpRequest();
-      http.open('get', url, true);
+      let http = new XMLHttpRequest()
+      http.open('get', url, true)
       http.onerror = (event) => {
-        console.error(event);
-        resolve(configString);
-      };
+        console.error(event)
+        resolve(configString)
+      }
       http.onreadystatechange = (event) => {
         if (http.readyState !== 4) {
-          return;
+          return
         }
         if (http.status === 200) {
-          console.log('loadYaml success!');
-          configString = http.responseText;
+          console.log('loadYaml success!')
+          configString = http.responseText
         } else {
-          console.warn('loadYaml fail...? status:' + http.status);
+          console.warn('loadYaml fail...? status:' + http.status)
         }
-        resolve(configString);
-      };
-      console.log('loadYaml start');
-      http.send(null);
-    });
+        resolve(configString)
+      }
+      console.log('loadYaml start')
+      http.send(null)
+    })
   }
 
-  private static applyConfig(config: Object, root: Object = AppConfigService.appConfig): Object {
+  private static applyConfig(
+    config: Object,
+    root: Object = AppConfigService.appConfig,
+  ): Object {
     for (let key in config) {
       if (isArray(config[key])) {
-        root[key] = config[key];
+        root[key] = []
+        config[key].map((val) => {
+          if (typeof val === 'object') {
+            const tmpObject = {}
+            for (const [k, value] of Object.entries(val)) {
+              tmpObject[k] = value
+            }
+            root[key].push(tmpObject)
+          } else {
+            root[key].push(val)
+          }
+        })
       } else if (typeof config[key] === 'object') {
-        if (!(key in root)) root[key] = {};
-        AppConfigService.applyConfig(config[key], root[key]);
+        if (!(key in root)) root[key] = {}
+        AppConfigService.applyConfig(config[key], root[key])
       } else {
-        root[key] = config[key];
+        root[key] = config[key]
       }
     }
-    return root;
+    console.log(root)
+    return root
   }
 }
 
 function isArray(obj) {
-  return Object.prototype.toString.call(obj) === '[object Array]';
+  return Object.prototype.toString.call(obj) === '[object Array]'
 }

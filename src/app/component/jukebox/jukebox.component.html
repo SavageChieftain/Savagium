@@ -1,86 +1,122 @@
-<div>
-  試聴音量：<input
-    [(ngModel)]="auditionVolume"
-    type="range"
-    min="0"
-    max="1"
-    step="0.01"
-  />
-</div>
-<div>
-  BGM音量：<input
-    [(ngModel)]="volume"
-    type="range"
-    min="0"
-    max="1"
-    step="0.01"
-  />
-</div>
-<hr />
-<div>
-  <div *ngFor="let audio of audios" class="box">
-    <button
-      *ngIf="audio !== auditionPlayer?.audio || auditionPlayer?.paused"
-      (click)="play(audio)"
-      [disabled]="!audio.isReady"
-    >
-      試聴/再生
-    </button>
-    <button
-      *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused"
-      (click)="stop()"
-      [disabled]="!audio.isReady"
-    >
-      試聴/停止
-    </button>
-    <button
-      *ngIf="audio !== jukebox?.audio"
-      (click)="playBGM(audio)"
-      [disabled]="!audio.isReady"
-    >
-      BGM/再生
-    </button>
-    <button
-      *ngIf="audio === jukebox?.audio"
-      (click)="stopBGM(audio)"
-      [disabled]="!audio.isReady"
-    >
-      BGM/停止
-    </button>
-    <span *ngIf="audio === auditionPlayer?.audio && !auditionPlayer?.paused"
-      >【試聴中】</span
-    >
-    <span *ngIf="audio === jukebox?.audio">【BGM】</span>
-    <span>{{ audio.name }}</span>
-  </div>
-  <div *ngIf="audios.length < 1">
-    アップロードされた音楽ファイルはここに表示されます。
-  </div>
-</div>
-
-<label>
-  <div class="drop-zone">
-    <div>
-      <i class="material-icons large-font">playlist_add</i>
-    </div>
-    <div>ここに音楽をドロップ</div>
-    <div class="small-font">またはここをクリックして選択</div>
+<div class="jukebox">
+  <div class="player">
+    <span *ngIf="!broadCast" class="mode-wrapper">
+      試聴モード
+      <button (click)="broadCastOn()" class="broadcast">
+        <i class="material-icons">cast</i>
+      </button>
+    </span>
+    <span *ngIf="broadCast" class="mode-wrapper">
+      配信モード
+      <button *ngIf="broadCast" (click)="broadCastOff()" class="broadcast">
+        <i class="material-icons">cast_connected</i>
+      </button>
+    </span>
+    <span *ngIf="selectedAudio" class="center title">{{
+      selectedAudio.name
+    }}</span>
+    <span *ngIf="!selectedAudio" class="center title">楽曲未選択</span>
+    <span *ngIf="broadCast" class="center control">
+      <button
+        *ngIf="
+          selectedAudio !== jukebox?.audio ||
+          (selectedAudio === jukebox?.audio && jukebox?.isPlaying === false)
+        "
+        (click)="play(selectedAudio)"
+        [disabled]="isDisableAudio(selectedAudio)"
+        class="play"
+      >
+        <i class="material-icons">play_arrow</i>
+      </button>
+      <button
+        *ngIf="selectedAudio === jukebox?.audio && jukebox?.isPlaying"
+        (click)="stop(selectedAudio)"
+        [disabled]="isDisableAudio(selectedAudio)"
+        class="stop"
+      >
+        <i class="material-icons">stop</i>
+      </button>
+    </span>
+    <span *ngIf="!broadCast" class="center control">
+      <button
+        *ngIf="
+          selectedAudio !== auditionPlayer?.audio ||
+          (selectedAudio === auditionPlayer?.audio && auditionPlayer?.paused)
+        "
+        (click)="play(selectedAudio)"
+        [disabled]="isDisableAudio(selectedAudio)"
+        class="play"
+      >
+        <i class="material-icons">play_arrow</i>
+      </button>
+      <button
+        *ngIf="
+          selectedAudio === auditionPlayer?.audio && !auditionPlayer?.paused
+        "
+        (click)="stop(selectedAudio)"
+        [disabled]="isDisableAudio(selectedAudio)"
+        class="stop"
+      >
+        <i class="material-icons">stop</i>
+      </button>
+    </span>
     <input
-      type="file"
-      style="display: none"
-      (change)="handleFileSelect($event)"
-      multiple
-      accept="audio/*"
+      *ngIf="!broadCast"
+      [(ngModel)]="auditionVolume"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
     />
-    <div class="small-font"><br />１ファイルにつき10MBまで</div>
+    <input
+      *ngIf="broadCast"
+      [(ngModel)]="volume"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+    />
   </div>
-</label>
-<div style="font-size: 12px">
-  ※「試聴」は自分のスピーカーだけで音楽を1回再生します。
-</div>
-<div style="font-size: 12px">
-  ※「BGM」はルーム内の全員で1つの音楽をループ再生します。
-</div>
-<div style="font-size: 12px">
-  ※現行バージョンのセーブデータ（zip）には音楽ファイルは含まれません。（毎回アップロードが必要です）
+  <h1>
+    <span>リスト(曲名クリックでセット)</span>
+    <label class="drop-zone">
+      <i class="material-icons">playlist_add</i>
+      <input
+        type="file"
+        style="display: none"
+        (change)="handleFileSelect($event)"
+        multiple
+        accept="audio/*"
+      />
+    </label>
+  </h1>
+  <div class="playlist" *ngIf="audios.length > 0">
+    <div *ngFor="let audio of audios" class="box">
+      <p class="item" (click)="select(audio)">
+        <span>{{ audio.name }}</span>
+        <span>{{ isNowPlaying(audio) }}</span>
+      </p>
+    </div>
+  </div>
+  <div class="note">
+    <span
+      >※<i class="material-icons">cast_connected</i
+      >配信モードはルーム内の全員で1つの音楽をループ再生します。</span
+    >
+    <span
+      >※<i class="material-icons">cast</i
+      >試聴モードは自分のスピーカーだけで音楽を1回再生します。</span
+    >
+    <span
+      >※試聴モードから配信モードに切り替えると、試聴中のBGMはストップします。</span
+    >
+    <span
+      >※<i class="material-icons">playlist_add</i
+      >アイコンの上にドラッグ&ドロップ、もしくはクリックでアップロード。</span
+    >
+    <span>※アップロードは1ファイル10MBまで</span>
+    <span
+      >※現行バージョンのセーブデータ（zip）には音楽ファイルは含まれません。（毎回アップロードが必要です）</span
+    >
+  </div>
 </div>

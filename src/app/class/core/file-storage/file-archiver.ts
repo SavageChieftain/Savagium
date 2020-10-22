@@ -81,9 +81,7 @@ export class FileArchiver {
     this.load(files)
   }
 
-  async load(files: File[])
-  async load(files: FileList)
-  async load(files: any) {
+  async load(files: File[] | FileList | any) {
     let length = files.length
     for (let i = 0; i < length; i++) {
       await this.handleImage(files[i])
