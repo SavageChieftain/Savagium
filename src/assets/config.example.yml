@@ -1,0 +1,9 @@
+webrtc:
+  key: #ここにSkywayのAPIKeyを入力してください
+  config:
+    iceServers: #未使用
+      - url: stun:stun.skyway.io:3478
+      - url: turn:homeo@turn.bistri.com:80
+        credential: homeo
+app: #未使用
+dice: #未使用
