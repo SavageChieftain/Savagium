@@ -20,10 +20,7 @@ import { GameCharacterSheetComponent } from 'component/game-character-sheet/game
 import { InputHandler } from 'directive/input-handler'
 import { MovableOption } from 'directive/movable.directive'
 import { RotableOption } from 'directive/rotable.directive'
-import {
-  ContextMenuSeparator,
-  ContextMenuService,
-} from 'service/context-menu.service'
+import { ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service'
 import { PanelOption, PanelService } from 'service/panel.service'
 import { PointerDeviceService } from 'service/pointer-device.service'
 import { TabletopService } from 'service/tabletop.service'
@@ -36,14 +33,17 @@ import { TabletopService } from 'service/tabletop.service'
 })
 export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() terrain: Terrain = null
-  @Input() is3D: boolean = false
+
+  @Input() is3D = false
 
   get name(): string {
     return this.terrain.name
   }
+
   get mode(): TerrainViewState {
     return this.terrain.mode
   }
+
   set mode(mode: TerrainViewState) {
     this.terrain.mode = mode
   }
@@ -51,12 +51,15 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
   get isLocked(): boolean {
     return this.terrain.isLocked
   }
+
   set isLocked(isLocked: boolean) {
     this.terrain.isLocked = isLocked
   }
+
   get hasWall(): boolean {
     return this.terrain.hasWall
   }
+
   get hasFloor(): boolean {
     return this.terrain.hasFloor
   }
@@ -64,6 +67,7 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
   get wallImage(): ImageFile {
     return this.terrain.wallImage
   }
+
   get floorImage(): ImageFile {
     return this.terrain.floorImage
   }
@@ -71,26 +75,31 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
   get height(): number {
     return this.adjustMinBounds(this.terrain.height)
   }
+
   get width(): number {
     return this.adjustMinBounds(this.terrain.width)
   }
+
   get depth(): number {
     return this.adjustMinBounds(this.terrain.depth)
   }
 
   get isVisibleFloor(): boolean {
-    return 0 < this.width * this.depth
-  }
-  get isVisibleWallTopBottom(): boolean {
-    return 0 < this.width * this.height
-  }
-  get isVisibleWallLeftRight(): boolean {
-    return 0 < this.depth * this.height
+    return this.width * this.depth > 0
   }
 
-  gridSize: number = 50
+  get isVisibleWallTopBottom(): boolean {
+    return this.width * this.height > 0
+  }
+
+  get isVisibleWallLeftRight(): boolean {
+    return this.depth * this.height > 0
+  }
+
+  gridSize = 50
 
   movableOption: MovableOption = {}
+
   rotableOption: RotableOption = {}
 
   private input: InputHandler = null
@@ -108,7 +117,7 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit() {
     EventSystem.register(this)
       .on('UPDATE_GAME_OBJECT', -1000, (event) => {
-        let object = ObjectStore.instance.get(event.data.identifier)
+        const object = ObjectStore.instance.get(event.data.identifier)
         if (!this.terrain || !object) return
         if (
           this.terrain === object ||
@@ -166,8 +175,8 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return
 
-    let menuPosition = this.pointerDeviceService.pointers[0]
-    let objectPosition = this.tabletopService.calcTabletopLocalCoordinate()
+    const menuPosition = this.pointerDeviceService.pointers[0]
+    const objectPosition = this.tabletopService.calcTabletopLocalCoordinate()
     this.contextMenuService.open(
       menuPosition,
       [
@@ -214,12 +223,11 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
         {
           name: 'コピーを作る',
           action: () => {
-            let cloneObject = this.terrain.clone()
+            const cloneObject = this.terrain.clone()
             cloneObject.location.x += this.gridSize
             cloneObject.location.y += this.gridSize
             cloneObject.isLocked = false
-            if (this.terrain.parent)
-              this.terrain.parent.appendChild(cloneObject)
+            if (this.terrain.parent) this.terrain.parent.appendChild(cloneObject)
             SoundEffect.play(PresetSound.blockPut)
           },
         },
@@ -234,9 +242,7 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
         {
           name: 'オブジェクト作成',
           action: null,
-          subActions: this.tabletopService.getContextMenuActionsForCreateObject(
-            objectPosition,
-          ),
+          subActions: this.tabletopService.getContextMenuActionsForCreateObject(objectPosition),
         },
       ],
       this.name,
@@ -260,17 +266,17 @@ export class TerrainComponent implements OnInit, OnDestroy, AfterViewInit {
       identifier: gameObject.identifier,
       className: gameObject.aliasName,
     })
-    let coordinate = this.pointerDeviceService.pointers[0]
+    const coordinate = this.pointerDeviceService.pointers[0]
     let title = '地形設定'
-    if (gameObject.name.length) title += ' - ' + gameObject.name
-    let option: PanelOption = {
-      title: title,
+    if (gameObject.name.length) title += ` - ${gameObject.name}`
+    const option: PanelOption = {
+      title,
       left: coordinate.x - 250,
       top: coordinate.y - 150,
       width: 500,
       height: 300,
     }
-    let component = this.panelService.open<GameCharacterSheetComponent>(
+    const component = this.panelService.open<GameCharacterSheetComponent>(
       GameCharacterSheetComponent,
       option,
     )

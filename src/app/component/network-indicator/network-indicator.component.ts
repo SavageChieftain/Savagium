@@ -1,42 +1,42 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy } from '@angular/core'
 
-import { EventSystem, Network } from '@udonarium/core/system';
+import { EventSystem, Network } from '@udonarium/core/system'
 
 @Component({
   selector: 'network-indicator',
   templateUrl: './network-indicator.component.html',
-  styleUrls: ['./network-indicator.component.scss']
+  styleUrls: ['./network-indicator.component.scss'],
 })
 export class NetworkIndicatorComponent implements AfterViewInit, OnDestroy {
-  private timer: NodeJS.Timer = null;
-  private needRepeat = false;
+  private timer: NodeJS.Timer = null
 
-  constructor(private elementRef: ElementRef, ) { }
+  private needRepeat = false
+
+  constructor(private elementRef: ElementRef) {}
 
   ngAfterViewInit() {
-    let repeatFunc = () => {
+    const repeatFunc = () => {
       if (this.needRepeat) {
-        this.timer = setTimeout(repeatFunc, 650);
-        this.needRepeat = false;
+        this.timer = setTimeout(repeatFunc, 650)
+        this.needRepeat = false
       } else {
-        this.timer = null;
-        this.elementRef.nativeElement.style.display = 'none';
+        this.timer = null
+        this.elementRef.nativeElement.style.display = 'none'
       }
-    };
+    }
 
-    EventSystem.register(this)
-      .on('*', event => {
-        if (this.needRepeat || Network.bandwidthUsage < 3 * 1024) return;
-        if (this.timer === null) {
-          this.elementRef.nativeElement.style.display = 'block';
-          this.timer = setTimeout(repeatFunc, 650);
-        } else {
-          this.needRepeat = true;
-        }
-      });
+    EventSystem.register(this).on('*', (event) => {
+      if (this.needRepeat || Network.bandwidthUsage < 3 * 1024) return
+      if (this.timer === null) {
+        this.elementRef.nativeElement.style.display = 'block'
+        this.timer = setTimeout(repeatFunc, 650)
+      } else {
+        this.needRepeat = true
+      }
+    })
   }
 
   ngOnDestroy() {
-    EventSystem.unregister(this);
+    EventSystem.unregister(this)
   }
 }

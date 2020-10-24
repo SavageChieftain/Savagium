@@ -1,10 +1,4 @@
-import {
-  animate,
-  keyframes,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations'
+import { animate, keyframes, style, transition, trigger } from '@angular/animations'
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -84,31 +78,35 @@ import { PointerDeviceService } from 'service/pointer-device.service'
           ]),
         ),
       ]),
-      transition('* => void', [
-        animate(100, style({ transform: 'scale3d(0, 0, 0)' })),
-      ]),
+      transition('* => void', [animate(100, style({ transform: 'scale3d(0, 0, 0)' }))]),
     ]),
   ],
 })
 export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() diceSymbol: DiceSymbol = null
-  @Input() is3D: boolean = false
+
+  @Input() is3D = false
 
   get face(): string {
     return this.diceSymbol.face
   }
+
   set face(face: string) {
     this.diceSymbol.face = face
   }
+
   get owner(): string {
     return this.diceSymbol.owner
   }
+
   set owner(owner: string) {
     this.diceSymbol.owner = owner
   }
+
   get rotate(): number {
     return this.diceSymbol.rotate
   }
+
   set rotate(rotate: number) {
     this.diceSymbol.rotate = rotate
   }
@@ -116,9 +114,11 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
   get name(): string {
     return this.diceSymbol.name
   }
+
   set name(name: string) {
     this.diceSymbol.name = name
   }
+
   get size(): number {
     return this.adjustMinBounds(this.diceSymbol.size)
   }
@@ -126,38 +126,46 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
   get faces(): string[] {
     return this.diceSymbol.faces
   }
+
   get imageFile(): ImageFile {
-    let image = this.diceSymbol.imageFile
-    return image ? image : this.emptyImage
+    const image = this.diceSymbol.imageFile
+    return image || this.emptyImage
   }
 
   get isMine(): boolean {
     return this.diceSymbol.isMine
   }
+
   get hasOwner(): boolean {
     return this.diceSymbol.hasOwner
   }
+
   get ownerName(): string {
     return this.diceSymbol.ownerName
   }
+
   get isVisible(): boolean {
     return this.diceSymbol.isVisible
   }
 
-  animeState: string = 'inactive'
+  animeState = 'inactive'
 
   private iconHiddenTimer: NodeJS.Timer = null
+
   get isIconHidden(): boolean {
     return this.iconHiddenTimer != null
   }
 
   private emptyImage: ImageFile = ImageFile.Empty
-  gridSize: number = 50
+
+  gridSize = 50
 
   movableOption: MovableOption = {}
+
   rotableOption: RotableOption = {}
 
   private doubleClickTimer: NodeJS.Timer = null
+
   private doubleClickPoint = { x: 0, y: 0 }
 
   private input: InputHandler = null
@@ -186,13 +194,12 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       })
       .on('UPDATE_GAME_OBJECT', -1000, (event) => {
-        let object = ObjectStore.instance.get(event.data.identifier)
+        const object = ObjectStore.instance.get(event.data.identifier)
         if (!this.diceSymbol || !object) return
         if (
           this.diceSymbol === object ||
           (object instanceof ObjectNode && this.diceSymbol.contains(object)) ||
-          (object instanceof PeerCursor &&
-            object.peerId === this.diceSymbol.owner)
+          (object instanceof PeerCursor && object.peerId === this.diceSymbol.owner)
         ) {
           this.changeDetector.markForCheck()
         }
@@ -204,8 +211,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
         this.changeDetector.markForCheck()
       })
       .on('DISCONNECT_PEER', (event) => {
-        if (this.diceSymbol.owner === event.data.peer)
-          this.changeDetector.markForCheck()
+        if (this.diceSymbol.owner === event.data.peer) this.changeDetector.markForCheck()
       })
     this.movableOption = {
       tabletopObject: this.diceSymbol,
@@ -248,10 +254,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
   startDoubleClickTimer(e) {
     if (!this.doubleClickTimer) {
       this.stopDoubleClickTimer()
-      this.doubleClickTimer = setTimeout(
-        () => this.stopDoubleClickTimer(),
-        e.touches ? 500 : 300,
-      )
+      this.doubleClickTimer = setTimeout(() => this.stopDoubleClickTimer(), e.touches ? 500 : 300)
       this.doubleClickPoint = this.input.pointer
       return
     }
@@ -271,7 +274,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onDoubleClick() {
     this.stopDoubleClickTimer()
-    let distance =
+    const distance =
       (this.doubleClickPoint.x - this.input.pointer.x) ** 2 +
       (this.doubleClickPoint.y - this.input.pointer.y) ** 2
     if (distance < 10 ** 2) {
@@ -285,9 +288,9 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
     e.preventDefault()
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return
-    let position = this.pointerDeviceService.pointers[0]
+    const position = this.pointerDeviceService.pointers[0]
 
-    let actions: ContextMenuAction[] = []
+    const actions: ContextMenuAction[] = []
 
     if (this.isVisible) {
       actions.push({
@@ -318,7 +321,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (this.isVisible) {
-      let subActions: ContextMenuAction[] = []
+      const subActions: ContextMenuAction[] = []
       this.faces.forEach((face) => {
         subActions.push({
           name: `${face}`,
@@ -331,7 +334,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
       actions.push({
         name: `ダイス目を設定`,
         action: null,
-        subActions: subActions,
+        subActions,
       })
     }
 
@@ -346,7 +349,7 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
     actions.push({
       name: 'コピーを作る',
       action: () => {
-        let cloneObject = this.diceSymbol.clone()
+        const cloneObject = this.diceSymbol.clone()
         cloneObject.location.x += this.gridSize
         cloneObject.location.y += this.gridSize
         cloneObject.update()
@@ -384,17 +387,17 @@ export class DiceSymbolComponent implements OnInit, AfterViewInit, OnDestroy {
       identifier: gameObject.identifier,
       className: gameObject.aliasName,
     })
-    let coordinate = this.pointerDeviceService.pointers[0]
+    const coordinate = this.pointerDeviceService.pointers[0]
     let title = 'ダイスシンボル設定'
-    if (gameObject.name.length) title += ' - ' + gameObject.name
-    let option: PanelOption = {
-      title: title,
+    if (gameObject.name.length) title += ` - ${gameObject.name}`
+    const option: PanelOption = {
+      title,
       left: coordinate.x - 300,
       top: coordinate.y - 300,
       width: 600,
       height: 600,
     }
-    let component = this.panelService.open<GameCharacterSheetComponent>(
+    const component = this.panelService.open<GameCharacterSheetComponent>(
       GameCharacterSheetComponent,
       option,
     )

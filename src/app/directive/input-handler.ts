@@ -10,35 +10,46 @@ interface InputHandlerOption {
 
 export class InputHandler {
   onStart: (ev: MouseEvent | TouchEvent) => void
+
   onMove: (ev: MouseEvent | TouchEvent) => void
+
   onEnd: (ev: MouseEvent | TouchEvent) => void
+
   onContextMenu: (ev: MouseEvent | TouchEvent) => void
 
   private callbackOnMouse = this.onMouse.bind(this)
+
   private callbackOnTouch = this.onTouch.bind(this)
+
   private callbackOnMenu = this.onMenu.bind(this)
 
   private lastPointers: PointerData[] = []
+
   private primaryPointer: PointerData = {
     x: 0,
     y: 0,
     z: 0,
     identifier: MOUSE_IDENTIFIER,
   }
+
   get pointer(): PointerCoordinate {
     return this.primaryPointer
   }
 
-  private _isDragging: boolean = false
-  private _isGrabbing: boolean = false
+  private _isDragging = false
+
+  private _isGrabbing = false
+
   get isDragging(): boolean {
     return this._isDragging
   }
+
   get isGrabbing(): boolean {
     return this._isGrabbing
   }
 
-  private _isDestroyed: boolean = false
+  private _isDestroyed = false
+
   get isDestroyed(): boolean {
     return this._isDestroyed
   }
@@ -62,32 +73,16 @@ export class InputHandler {
   }
 
   private initialize() {
-    this.target.addEventListener(
-      'mousedown',
-      this.callbackOnMouse,
-      this.option.capture,
-    )
-    this.target.addEventListener(
-      'touchstart',
-      this.callbackOnTouch,
-      this.option.capture,
-    )
+    this.target.addEventListener('mousedown', this.callbackOnMouse, this.option.capture)
+    this.target.addEventListener('touchstart', this.callbackOnTouch, this.option.capture)
     if (this.option.always) this.addEventListeners()
   }
 
   destroy() {
     this.cancel()
     this._isDestroyed = true
-    this.target.removeEventListener(
-      'mousedown',
-      this.callbackOnMouse,
-      this.option.capture,
-    )
-    this.target.removeEventListener(
-      'touchstart',
-      this.callbackOnTouch,
-      this.option.capture,
-    )
+    this.target.removeEventListener('mousedown', this.callbackOnMouse, this.option.capture)
+    this.target.removeEventListener('touchstart', this.callbackOnTouch, this.option.capture)
     this.removeEventListeners()
   }
 
@@ -97,7 +92,7 @@ export class InputHandler {
   }
 
   private onMouse(e: MouseEvent) {
-    let mosuePointer: PointerData = {
+    const mosuePointer: PointerData = {
       x: e.pageX,
       y: e.pageY,
       z: 0,
@@ -111,12 +106,12 @@ export class InputHandler {
   }
 
   private onTouch(e: TouchEvent) {
-    let length = e.changedTouches.length
+    const { length } = e.changedTouches
     if (length < 1) return
     this.lastPointers = []
     for (let i = 0; i < length; i++) {
-      let touch = e.changedTouches[i]
-      let touchPointer: PointerData = {
+      const touch = e.changedTouches[i]
+      const touchPointer: PointerData = {
         x: touch.pageX,
         y: touch.pageY,
         z: 0,
@@ -128,12 +123,12 @@ export class InputHandler {
     if (e.type === 'touchstart') {
       this.primaryPointer = this.lastPointers[0]
     } else {
-      let changedTouches = Array.from(e.changedTouches)
-      let touch = changedTouches.find(
+      const changedTouches = Array.from(e.changedTouches)
+      const touch = changedTouches.find(
         (touch) => touch.identifier === this.primaryPointer.identifier,
       )
       if (touch == null) {
-        let isTouchContinues =
+        const isTouchContinues =
           Array.from(e.touches).find(
             (touch) => touch.identifier === this.primaryPointer.identifier,
           ) != null
@@ -144,7 +139,7 @@ export class InputHandler {
         }
         return
       }
-      let touchPointer: PointerData = {
+      const touchPointer: PointerData = {
         x: touch.pageX,
         y: touch.pageY,
         z: 0,
@@ -181,14 +176,10 @@ export class InputHandler {
     if (this.onContextMenu) this.onContextMenu(e)
   }
 
-  private isSyntheticEvent(
-    mosuePointer: PointerData,
-    threshold: number = 15,
-  ): boolean {
-    for (let pointer of this.lastPointers) {
+  private isSyntheticEvent(mosuePointer: PointerData, threshold: number = 15): boolean {
+    for (const pointer of this.lastPointers) {
       if (pointer.identifier === mosuePointer.identifier) continue
-      let distance =
-        (mosuePointer.x - pointer.x) ** 2 + (mosuePointer.y - pointer.y) ** 2
+      const distance = (mosuePointer.x - pointer.x) ** 2 + (mosuePointer.y - pointer.y) ** 2
       if (distance < threshold ** 2) {
         return true
       }
@@ -197,85 +188,29 @@ export class InputHandler {
   }
 
   private addEventListeners() {
-    let option: AddEventListenerOptions = {
+    const option: AddEventListenerOptions = {
       capture: this.option.capture,
       passive: this.option.passive,
     }
-    this.target.ownerDocument.addEventListener(
-      'mousemove',
-      this.callbackOnMouse,
-      option,
-    )
-    this.target.ownerDocument.addEventListener(
-      'mouseup',
-      this.callbackOnMouse,
-      option,
-    )
-    this.target.ownerDocument.addEventListener(
-      'touchmove',
-      this.callbackOnTouch,
-      option,
-    )
-    this.target.ownerDocument.addEventListener(
-      'touchend',
-      this.callbackOnTouch,
-      option,
-    )
-    this.target.ownerDocument.addEventListener(
-      'touchcancel',
-      this.callbackOnTouch,
-      option,
-    )
-    this.target.ownerDocument.addEventListener(
-      'contextmenu',
-      this.callbackOnMenu,
-      option,
-    )
-    this.target.ownerDocument.addEventListener(
-      'drop',
-      this.callbackOnMouse,
-      option,
-    )
+    this.target.ownerDocument.addEventListener('mousemove', this.callbackOnMouse, option)
+    this.target.ownerDocument.addEventListener('mouseup', this.callbackOnMouse, option)
+    this.target.ownerDocument.addEventListener('touchmove', this.callbackOnTouch, option)
+    this.target.ownerDocument.addEventListener('touchend', this.callbackOnTouch, option)
+    this.target.ownerDocument.addEventListener('touchcancel', this.callbackOnTouch, option)
+    this.target.ownerDocument.addEventListener('contextmenu', this.callbackOnMenu, option)
+    this.target.ownerDocument.addEventListener('drop', this.callbackOnMouse, option)
   }
 
   private removeEventListeners() {
-    let option: EventListenerOptions = {
+    const option: EventListenerOptions = {
       capture: this.option.capture,
     }
-    this.target.ownerDocument.removeEventListener(
-      'mousemove',
-      this.callbackOnMouse,
-      option,
-    )
-    this.target.ownerDocument.removeEventListener(
-      'mouseup',
-      this.callbackOnMouse,
-      option,
-    )
-    this.target.ownerDocument.removeEventListener(
-      'touchmove',
-      this.callbackOnTouch,
-      option,
-    )
-    this.target.ownerDocument.removeEventListener(
-      'touchend',
-      this.callbackOnTouch,
-      option,
-    )
-    this.target.ownerDocument.removeEventListener(
-      'touchcancel',
-      this.callbackOnTouch,
-      option,
-    )
-    this.target.ownerDocument.removeEventListener(
-      'contextmenu',
-      this.callbackOnMenu,
-      option,
-    )
-    this.target.ownerDocument.removeEventListener(
-      'drop',
-      this.callbackOnMouse,
-      option,
-    )
+    this.target.ownerDocument.removeEventListener('mousemove', this.callbackOnMouse, option)
+    this.target.ownerDocument.removeEventListener('mouseup', this.callbackOnMouse, option)
+    this.target.ownerDocument.removeEventListener('touchmove', this.callbackOnTouch, option)
+    this.target.ownerDocument.removeEventListener('touchend', this.callbackOnTouch, option)
+    this.target.ownerDocument.removeEventListener('touchcancel', this.callbackOnTouch, option)
+    this.target.ownerDocument.removeEventListener('contextmenu', this.callbackOnMenu, option)
+    this.target.ownerDocument.removeEventListener('drop', this.callbackOnMouse, option)
   }
 }

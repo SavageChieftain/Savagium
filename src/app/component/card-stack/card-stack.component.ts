@@ -1,11 +1,4 @@
-import {
-  animate,
-  keyframes,
-  state,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations'
+import { animate, keyframes, state, style, transition, trigger } from '@angular/animations'
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -31,10 +24,7 @@ import { GameCharacterSheetComponent } from 'component/game-character-sheet/game
 import { InputHandler } from 'directive/input-handler'
 import { MovableOption } from 'directive/movable.directive'
 import { RotableOption } from 'directive/rotable.directive'
-import {
-  ContextMenuSeparator,
-  ContextMenuService,
-} from 'service/context-menu.service'
+import { ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service'
 import { PanelOption, PanelService } from 'service/panel.service'
 import { PointerDeviceService } from 'service/pointer-device.service'
 
@@ -75,37 +65,46 @@ import { PointerDeviceService } from 'service/pointer-device.service'
 })
 export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() cardStack: CardStack = null
-  @Input() is3D: boolean = false
+
+  @Input() is3D = false
 
   get name(): string {
     return this.cardStack.name
   }
+
   get rotate(): number {
     return this.cardStack.rotate
   }
+
   set rotate(rotate: number) {
     this.cardStack.rotate = rotate
   }
+
   get zindex(): number {
     return this.cardStack.zindex
   }
+
   get isShowTotal(): boolean {
     return this.cardStack.isShowTotal
   }
+
   get cards(): Card[] {
     return this.cardStack.cards
   }
+
   get isEmpty(): boolean {
     return this.cardStack.isEmpty
   }
+
   get size(): number {
-    let card = this.cardStack.topCard
+    const card = this.cardStack.topCard
     return card ? card.size : 2
   }
 
   get hasOwner(): boolean {
     return this.cardStack.hasOwner
   }
+
   get ownerName(): string {
     return this.cardStack.ownerName
   }
@@ -113,23 +112,27 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   get topCard(): Card {
     return this.cardStack.topCard
   }
+
   get imageFile(): ImageFile {
     return this.cardStack.imageFile
   }
 
-  animeState: string = 'inactive'
+  animeState = 'inactive'
 
   private iconHiddenTimer: NodeJS.Timer = null
+
   get isIconHidden(): boolean {
     return this.iconHiddenTimer != null
   }
 
-  gridSize: number = 50
+  gridSize = 50
 
   movableOption: MovableOption = {}
+
   rotableOption: RotableOption = {}
 
   private doubleClickTimer: NodeJS.Timer = null
+
   private doubleClickPoint = { x: 0, y: 0 }
 
   private input: InputHandler = null
@@ -152,22 +155,18 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       })
       .on('UPDATE_GAME_OBJECT', -1000, (event) => {
-        let object = ObjectStore.instance.get(event.data.identifier)
+        const object = ObjectStore.instance.get(event.data.identifier)
         if (!this.cardStack || !object) return
         if (
           this.cardStack === object ||
           (object instanceof ObjectNode && this.cardStack.contains(object)) ||
-          (object instanceof PeerCursor &&
-            object.peerId === this.cardStack.owner)
+          (object instanceof PeerCursor && object.peerId === this.cardStack.owner)
         ) {
           this.changeDetector.markForCheck()
         }
       })
       .on('CARD_STACK_DECREASED', (event) => {
-        if (
-          event.data.cardStackIdentifier === this.cardStack.identifier &&
-          this.cardStack
-        )
+        if (event.data.cardStackIdentifier === this.cardStack.identifier && this.cardStack)
           this.changeDetector.markForCheck()
       })
       .on('SYNCHRONIZE_FILE_LIST', (event) => {
@@ -177,8 +176,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         this.changeDetector.markForCheck()
       })
       .on('DISCONNECT_PEER', (event) => {
-        if (this.cardStack.owner === event.data.peer)
-          this.changeDetector.markForCheck()
+        if (this.cardStack.owner === event.data.peer) this.changeDetector.markForCheck()
       })
     this.movableOption = {
       tabletopObject: this.cardStack,
@@ -213,8 +211,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   onCardDrop(e) {
     if (
       this.cardStack === e.detail ||
-      (e.detail instanceof Card === false &&
-        e.detail instanceof CardStack === false)
+      (e.detail instanceof Card === false && e.detail instanceof CardStack === false)
     ) {
       return
     }
@@ -222,15 +219,15 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     e.preventDefault()
 
     if (e.detail instanceof Card) {
-      let card: Card = e.detail
-      let distance: number =
+      const card: Card = e.detail
+      const distance: number =
         (card.location.x - this.cardStack.location.x) ** 2 +
         (card.location.y - this.cardStack.location.y) ** 2 +
         (card.posZ - this.cardStack.posZ) ** 2
       if (distance < 50 ** 2) this.cardStack.putOnTop(card)
     } else if (e.detail instanceof CardStack) {
-      let cardStack: CardStack = e.detail
-      let distance: number =
+      const cardStack: CardStack = e.detail
+      const distance: number =
         (cardStack.location.x - this.cardStack.location.x) ** 2 +
         (cardStack.location.y - this.cardStack.location.y) ** 2 +
         (cardStack.posZ - this.cardStack.posZ) ** 2
@@ -241,10 +238,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   startDoubleClickTimer(e) {
     if (!this.doubleClickTimer) {
       this.stopDoubleClickTimer()
-      this.doubleClickTimer = setTimeout(
-        () => this.stopDoubleClickTimer(),
-        e.touches ? 500 : 300,
-      )
+      this.doubleClickTimer = setTimeout(() => this.stopDoubleClickTimer(), e.touches ? 500 : 300)
       this.doubleClickPoint = this.input.pointer
       return
     }
@@ -264,7 +258,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onDoubleClick() {
     this.stopDoubleClickTimer()
-    let distance =
+    const distance =
       (this.doubleClickPoint.x - this.input.pointer.x) ** 2 +
       (this.doubleClickPoint.y - this.input.pointer.y) ** 2
     if (distance < 10 ** 2) {
@@ -298,7 +292,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     e.preventDefault()
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return
-    let position = this.pointerDeviceService.pointers[0]
+    const position = this.pointerDeviceService.pointers[0]
     this.contextMenuService.open(
       position,
       [
@@ -381,8 +375,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         {
           name: 'カードサイズを揃える',
           action: () => {
-            if (this.cardStack.topCard)
-              this.cardStack.unifyCardsSize(this.cardStack.topCard.size)
+            if (this.cardStack.topCard) this.cardStack.unifyCardsSize(this.cardStack.topCard.size)
           },
         },
         ContextMenuSeparator,
@@ -410,7 +403,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
         {
           name: 'コピーを作る',
           action: () => {
-            let cloneObject = this.cardStack.clone()
+            const cloneObject = this.cardStack.clone()
             cloneObject.location.x += this.gridSize
             cloneObject.location.y += this.gridSize
             cloneObject.owner = ''
@@ -441,7 +434,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private drawCard(): Card {
-    let card = this.cardStack.drawCard()
+    const card = this.cardStack.drawCard()
     if (card) {
       this.cardStack.update() // todo
       card.location.x += 100 + Math.random() * 50
@@ -452,8 +445,8 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private breakStack() {
-    let cards = this.cardStack.drawCardAll().reverse()
-    for (let card of cards) {
+    const cards = this.cardStack.drawCardAll().reverse()
+    for (const card of cards) {
       card.location.x += 25 - Math.random() * 50
       card.location.y += 25 - Math.random() * 50
       card.toTopmost()
@@ -465,13 +458,11 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private splitStack(split: number) {
     if (split < 2) return
-    let cardStacks: CardStack[] = []
+    const cardStacks: CardStack[] = []
     for (let i = 0; i < split; i++) {
-      let cardStack = CardStack.create(this.cardStack.name)
-      cardStack.location.x =
-        this.cardStack.location.x + 50 - Math.random() * 100
-      cardStack.location.y =
-        this.cardStack.location.y + 50 - Math.random() * 100
+      const cardStack = CardStack.create(this.cardStack.name)
+      cardStack.location.x = this.cardStack.location.x + 50 - Math.random() * 100
+      cardStack.location.y = this.cardStack.location.y + 50 - Math.random() * 100
       cardStack.posZ = this.cardStack.posZ
       cardStack.location.name = this.cardStack.location.name
       cardStack.rotate = this.rotate
@@ -479,7 +470,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       cardStacks.push(cardStack)
     }
 
-    let cards = this.cardStack.drawCardAll()
+    const cards = this.cardStack.drawCardAll()
     this.cardStack.setLocation('graveyard')
     this.cardStack.destroy()
 
@@ -494,11 +485,8 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private concatStack(
-    topStack: CardStack,
-    bottomStack: CardStack = this.cardStack,
-  ) {
-    let newCardStack = CardStack.create(topStack.name)
+  private concatStack(topStack: CardStack, bottomStack: CardStack = this.cardStack) {
+    const newCardStack = CardStack.create(topStack.name)
     newCardStack.location.name = bottomStack.location.name
     newCardStack.location.x = bottomStack.location.x
     newCardStack.location.y = bottomStack.location.y
@@ -506,10 +494,9 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     newCardStack.zindex = topStack.zindex
     newCardStack.rotate = bottomStack.rotate
 
-    let bottomCards: Card[] = bottomStack.drawCardAll()
-    let topCards: Card[] = topStack.drawCardAll()
-    for (let card of topCards.concat(bottomCards))
-      newCardStack.putOnBottom(card)
+    const bottomCards: Card[] = bottomStack.drawCardAll()
+    const topCards: Card[] = topStack.drawCardAll()
+    for (const card of topCards.concat(bottomCards)) newCardStack.putOnBottom(card)
 
     bottomStack.setLocation('')
     bottomStack.destroy()
@@ -519,10 +506,10 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private dispatchCardDropEvent() {
-    let element: HTMLElement = this.elementRef.nativeElement
-    let parent = element.parentElement
-    let children = parent.children
-    let event = new CustomEvent('carddrop', {
+    const element: HTMLElement = this.elementRef.nativeElement
+    const parent = element.parentElement
+    const { children } = parent
+    const event = new CustomEvent('carddrop', {
       detail: this.cardStack,
       bubbles: true,
     })
@@ -536,17 +523,17 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       identifier: gameObject.identifier,
       className: gameObject.aliasName,
     })
-    let coordinate = this.pointerDeviceService.pointers[0]
+    const coordinate = this.pointerDeviceService.pointers[0]
     let title = '山札設定'
-    if (gameObject.name.length) title += ' - ' + gameObject.name
-    let option: PanelOption = {
-      title: title,
+    if (gameObject.name.length) title += ` - ${gameObject.name}`
+    const option: PanelOption = {
+      title,
       left: coordinate.x - 300,
       top: coordinate.y - 300,
       width: 600,
       height: 600,
     }
-    let component = this.panelService.open<GameCharacterSheetComponent>(
+    const component = this.panelService.open<GameCharacterSheetComponent>(
       GameCharacterSheetComponent,
       option,
     )
@@ -559,8 +546,8 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
       className: gameObject.aliasName,
     })
 
-    let coordinate = this.pointerDeviceService.pointers[0]
-    let option: PanelOption = {
+    const coordinate = this.pointerDeviceService.pointers[0]
+    const option: PanelOption = {
       left: coordinate.x - 200,
       top: coordinate.y - 300,
       width: 400,
@@ -568,10 +555,7 @@ export class CardStackComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.cardStack.owner = Network.peerId
-    let component = this.panelService.open<CardStackListComponent>(
-      CardStackListComponent,
-      option,
-    )
+    const component = this.panelService.open<CardStackListComponent>(CardStackListComponent, option)
     component.cardStack = gameObject
   }
 

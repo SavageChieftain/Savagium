@@ -13,13 +13,16 @@ type UpdateCallback = (metadata: MetaData) => void
 
 export class FileArchiver {
   private static _instance: FileArchiver
+
   static get instance(): FileArchiver {
     if (!FileArchiver._instance) FileArchiver._instance = new FileArchiver()
     return FileArchiver._instance
   }
 
   private callbackOnDragEnter
+
   private callbackOnDragOver
+
   private callbackOnDrop
 
   private constructor() {
@@ -46,16 +49,8 @@ export class FileArchiver {
   }
 
   private removeEventListeners() {
-    document.body.removeEventListener(
-      'dragenter',
-      this.callbackOnDragEnter,
-      false,
-    )
-    document.body.removeEventListener(
-      'dragover',
-      this.callbackOnDragOver,
-      false,
-    )
+    document.body.removeEventListener('dragenter', this.callbackOnDragEnter, false)
+    document.body.removeEventListener('dragover', this.callbackOnDragOver, false)
     document.body.removeEventListener('drop', this.callbackOnDrop, false)
     this.callbackOnDragEnter = null
     this.callbackOnDragOver = null
@@ -77,12 +72,12 @@ export class FileArchiver {
     event.preventDefault()
 
     console.log('onDrop', event.dataTransfer)
-    let files = event.dataTransfer.files
+    const { files } = event.dataTransfer
     this.load(files)
   }
 
   async load(files: File[] | FileList | any) {
-    let length = files.length
+    const { length } = files
     for (let i = 0; i < length; i++) {
       await this.handleImage(files[i])
       await this.handleAudio(files[i])
@@ -96,15 +91,11 @@ export class FileArchiver {
     if (file.type.indexOf('image/') < 0) return
     if (2 * 1024 * 1024 < file.size) {
       console.warn(
-        `File size limit exceeded. -> ${file.name} (${(
-          file.size /
-          1024 /
-          1024
-        ).toFixed(2)}MB)`,
+        `File size limit exceeded. -> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
       )
       return
     }
-    console.log(file.name + ' type:' + file.type)
+    console.log(`${file.name} type:${file.type}`)
     await ImageStorage.instance.addAsync(file)
   }
 
@@ -112,35 +103,27 @@ export class FileArchiver {
     if (file.type.indexOf('audio/') < 0) return
     if (10 * 1024 * 1024 < file.size) {
       console.warn(
-        `File size limit exceeded. -> ${file.name} (${(
-          file.size /
-          1024 /
-          1024
-        ).toFixed(2)}MB)`,
+        `File size limit exceeded. -> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
       )
       return
     }
-    console.log(file.name + ' type:' + file.type)
+    console.log(`${file.name} type:${file.type}`)
     await AudioStorage.instance.addAsync(file)
   }
 
   private async handleText(file: File): Promise<void> {
     if (file.type.indexOf('text/') < 0) return
-    console.log(file.name + ' type:' + file.type)
+    console.log(`${file.name} type:${file.type}`)
     try {
-      let xmlElement: Element = XmlUtil.xml2element(
-        await FileReaderUtil.readAsTextAsync(file),
-      )
-      if (xmlElement)
-        EventSystem.trigger('XML_LOADED', { xmlElement: xmlElement })
+      const xmlElement: Element = XmlUtil.xml2element(await FileReaderUtil.readAsTextAsync(file))
+      if (xmlElement) EventSystem.trigger('XML_LOADED', { xmlElement })
     } catch (reason) {
       console.warn(reason)
     }
   }
 
   private async handleZip(file: File) {
-    if (!(0 <= file.type.indexOf('application/') || file.type.length < 1))
-      return
+    if (!(file.type.indexOf('application/') >= 0 || file.type.length < 1)) return
     let zip = new JSZip()
     try {
       zip = await zip.loadAsync(file)
@@ -148,12 +131,12 @@ export class FileArchiver {
       console.warn(reason)
       return
     }
-    let zipEntries = []
+    const zipEntries = []
     zip.forEach((relativePath, zipEntry) => zipEntries.push(zipEntry))
-    for (let zipEntry of zipEntries) {
+    for (const zipEntry of zipEntries) {
       try {
-        let arraybuffer = await zipEntry.async('arraybuffer')
-        console.log(zipEntry.name + ' 解凍...')
+        const arraybuffer = await zipEntry.async('arraybuffer')
+        console.log(`${zipEntry.name} 解凍...`)
         await this.load([
           new File([arraybuffer], zipEntry.name, {
             type: MimeType.type(zipEntry.name),
@@ -165,31 +148,19 @@ export class FileArchiver {
     }
   }
 
-  async saveAsync(
-    files: File[],
-    zipName: string,
-    updateCallback?: UpdateCallback,
-  ): Promise<void>
-  async saveAsync(
-    files: FileList,
-    zipName: string,
-    updateCallback?: UpdateCallback,
-  ): Promise<void>
-  async saveAsync(
-    files: any,
-    zipName: string,
-    updateCallback?: UpdateCallback,
-  ): Promise<void> {
+  async saveAsync(files: File[], zipName: string, updateCallback?: UpdateCallback): Promise<void>
+  async saveAsync(files: FileList, zipName: string, updateCallback?: UpdateCallback): Promise<void>
+  async saveAsync(files: any, zipName: string, updateCallback?: UpdateCallback): Promise<void> {
     if (!files) return
 
-    let zip = new JSZip()
-    let length = files.length
+    const zip = new JSZip()
+    const { length } = files
     for (let i = 0; i < length; i++) {
-      let file = files[i]
+      const file = files[i]
       zip.file(file.name, file)
     }
 
-    let blob = await zip.generateAsync(
+    const blob = await zip.generateAsync(
       {
         type: 'blob',
         compression: 'DEFLATE',
@@ -199,6 +170,6 @@ export class FileArchiver {
       },
       updateCallback,
     )
-    saveAs(blob, zipName + '.zip')
+    saveAs(blob, `${zipName}.zip`)
   }
 }

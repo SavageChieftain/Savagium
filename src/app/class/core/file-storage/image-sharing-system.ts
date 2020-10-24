@@ -8,22 +8,19 @@ import { MimeType } from './mime-type'
 
 export class ImageSharingSystem {
   private static _instance: ImageSharingSystem
+
   static get instance(): ImageSharingSystem {
-    if (!ImageSharingSystem._instance)
-      ImageSharingSystem._instance = new ImageSharingSystem()
+    if (!ImageSharingSystem._instance) ImageSharingSystem._instance = new ImageSharingSystem()
     return ImageSharingSystem._instance
   }
 
-  private sendTaskMap: Map<
-    string,
-    BufferSharingTask<ImageContext[]>
-  > = new Map()
-  private receiveTaskMap: Map<
-    string,
-    BufferSharingTask<ImageContext[]>
-  > = new Map()
-  private maxSendTask: number = 2
-  private maxReceiveTask: number = 4
+  private sendTaskMap: Map<string, BufferSharingTask<ImageContext[]>> = new Map()
+
+  private receiveTaskMap: Map<string, BufferSharingTask<ImageContext[]>> = new Map()
+
+  private maxSendTask = 2
+
+  private maxReceiveTask = 4
 
   private constructor() {
     console.log('FileSharingSystem ready...')
@@ -41,23 +38,18 @@ export class ImageSharingSystem {
       })
       .on('SYNCHRONIZE_FILE_LIST', (event) => {
         if (event.isSendFromSelf) return
-        console.log(
-          'SYNCHRONIZE_FILE_LIST ImageStorageService ' + event.sendFrom,
-        )
+        console.log(`SYNCHRONIZE_FILE_LIST ImageStorageService ${event.sendFrom}`)
 
-        let otherCatalog: CatalogItem[] = event.data
-        let request: CatalogItem[] = []
+        const otherCatalog: CatalogItem[] = event.data
+        const request: CatalogItem[] = []
 
-        for (let item of otherCatalog) {
+        for (const item of otherCatalog) {
           let image: ImageFile = ImageStorage.instance.get(item.identifier)
           if (image === null) {
             image = ImageFile.createEmpty(item.identifier)
             ImageStorage.instance.add(image)
           }
-          if (
-            image.state < ImageState.COMPLETE &&
-            !this.receiveTaskMap.has(item.identifier)
-          ) {
+          if (image.state < ImageState.COMPLETE && !this.receiveTaskMap.has(item.identifier)) {
             request.push({ identifier: item.identifier, state: image.state })
           }
         }
@@ -79,11 +71,11 @@ export class ImageSharingSystem {
       .on('REQUEST_FILE_RESOURE', async (event) => {
         if (event.isSendFromSelf) return
 
-        let request: CatalogItem[] = event.data.identifiers
-        let randomRequest: CatalogItem[] = []
+        const request: CatalogItem[] = event.data.identifiers
+        const randomRequest: CatalogItem[] = []
 
-        for (let item of request) {
-          let image: ImageFile = ImageStorage.instance.get(item.identifier)
+        for (const item of request) {
+          const image: ImageFile = ImageStorage.instance.get(item.identifier)
           if (image && item.state < image.state)
             randomRequest.push({
               identifier: item.identifier,
@@ -93,52 +85,39 @@ export class ImageSharingSystem {
 
         if (
           this.isLimitSendTask() === false &&
-          0 < randomRequest.length &&
+          randomRequest.length > 0 &&
           !this.existsSendTask(event.data.receiver)
         ) {
           // 送信
-          let updateImages: ImageContext[] = this.makeSendUpdateImages(
-            randomRequest,
-          )
+          const updateImages: ImageContext[] = this.makeSendUpdateImages(randomRequest)
           console.log(
-            'REQUEST_FILE_RESOURE ImageStorageService Send!!! ' +
-              event.data.receiver +
-              ' -> ' +
-              updateImages.length,
+            `REQUEST_FILE_RESOURE ImageStorageService Send!!! ${event.data.receiver} -> ${updateImages.length}`,
           )
           this.startSendTask(updateImages, event.data.receiver)
         } else {
           // 中継
-          let candidatePeers: string[] = event.data.candidatePeers
-          let index = candidatePeers.indexOf(Network.peerId)
-          if (-1 < index) candidatePeers.splice(index, 1)
+          const { candidatePeers } = event.data
+          const index = candidatePeers.indexOf(Network.peerId)
+          if (index > -1) candidatePeers.splice(index, 1)
 
-          for (let peer of candidatePeers) {
+          for (const peer of candidatePeers) {
             console.log(
-              'REQUEST_FILE_RESOURE ImageStorageService Relay!!! ' +
-                peer +
-                ' -> ' +
-                event.data.identifiers,
+              `REQUEST_FILE_RESOURE ImageStorageService Relay!!! ${peer} -> ${event.data.identifiers}`,
             )
             EventSystem.call(event, peer)
             return
           }
           console.log(
-            'REQUEST_FILE_RESOURE ImageStorageService あぶれた...' +
-              event.data.receiver,
+            `REQUEST_FILE_RESOURE ImageStorageService あぶれた...${event.data.receiver}`,
             randomRequest.length,
           )
         }
       })
       .on('UPDATE_FILE_RESOURE', (event) => {
-        let updateImages: ImageContext[] = event.data.updateImages
-        console.log(
-          'UPDATE_FILE_RESOURE ImageStorageService ' + event.sendFrom + ' -> ',
-          updateImages,
-        )
-        for (let context of updateImages) {
-          if (context.blob)
-            context.blob = new Blob([context.blob], { type: context.type })
+        const { updateImages } = event.data
+        console.log(`UPDATE_FILE_RESOURE ImageStorageService ${event.sendFrom} -> `, updateImages)
+        for (const context of updateImages) {
+          if (context.blob) context.blob = new Blob([context.blob], { type: context.type })
           if (context.thumbnail.blob)
             context.thumbnail.blob = new Blob([context.thumbnail.blob], {
               type: context.thumbnail.type,
@@ -147,15 +126,12 @@ export class ImageSharingSystem {
         }
       })
       .on('START_FILE_TRANSMISSION', (event) => {
-        console.log('START_FILE_TRANSMISSION ' + event.data.taskIdentifier)
-        let identifier = event.data.taskIdentifier
-        let image: ImageFile = ImageStorage.instance.get(identifier)
-        if (
-          this.receiveTaskMap.has(identifier) ||
-          (image && ImageState.COMPLETE <= image.state)
-        ) {
-          console.warn('CANCEL_TASK_ ' + identifier)
-          EventSystem.call('CANCEL_TASK_' + identifier, null, event.sendFrom)
+        console.log(`START_FILE_TRANSMISSION ${event.data.taskIdentifier}`)
+        const identifier = event.data.taskIdentifier
+        const image: ImageFile = ImageStorage.instance.get(identifier)
+        if (this.receiveTaskMap.has(identifier) || (image && ImageState.COMPLETE <= image.state)) {
+          console.warn(`CANCEL_TASK_ ${identifier}`)
+          EventSystem.call(`CANCEL_TASK_${identifier}`, null, event.sendFrom)
         } else {
           this.startReceiveTask(identifier)
         }
@@ -167,31 +143,19 @@ export class ImageSharingSystem {
   }
 
   private async startSendTask(updateImages: ImageContext[], sendTo: string) {
-    let identifier =
-      updateImages.length === 1
-        ? updateImages[0].identifier
-        : UUID.generateUuid()
-    let task = BufferSharingTask.createSendTask<ImageContext[]>(
-      identifier,
-      sendTo,
-    )
+    const identifier = updateImages.length === 1 ? updateImages[0].identifier : UUID.generateUuid()
+    const task = BufferSharingTask.createSendTask<ImageContext[]>(identifier, sendTo)
     this.sendTaskMap.set(task.identifier, task)
-    EventSystem.call(
-      'START_FILE_TRANSMISSION',
-      { taskIdentifier: identifier },
-      sendTo,
-    )
+    EventSystem.call('START_FILE_TRANSMISSION', { taskIdentifier: identifier }, sendTo)
 
     /* hotfix issue #1 */
-    for (let context of updateImages) {
+    for (const context of updateImages) {
       if (context.thumbnail.blob) {
         context.thumbnail.blob = <any>(
           await FileReaderUtil.readAsArrayBufferAsync(context.thumbnail.blob)
         )
       } else if (context.blob) {
-        context.blob = <any>(
-          await FileReaderUtil.readAsArrayBufferAsync(context.blob)
-        )
+        context.blob = <any>await FileReaderUtil.readAsArrayBufferAsync(context.blob)
       }
     }
     /* */
@@ -205,7 +169,7 @@ export class ImageSharingSystem {
   }
 
   private startReceiveTask(identifier: string) {
-    let task = BufferSharingTask.createReceiveTask<ImageContext[]>(identifier)
+    const task = BufferSharingTask.createReceiveTask<ImageContext[]>(identifier)
     this.receiveTaskMap.set(identifier, task)
     task.onfinish = (task, data) => {
       this.stopReceiveTask(task.identifier)
@@ -222,7 +186,7 @@ export class ImageSharingSystem {
   }
 
   private stopSendTask(identifier: string) {
-    let task = this.sendTaskMap.get(identifier)
+    const task = this.sendTaskMap.get(identifier)
     if (task) {
       task.cancel()
     }
@@ -232,7 +196,7 @@ export class ImageSharingSystem {
   }
 
   private stopReceiveTask(identifier: string) {
-    let task = this.receiveTaskMap.get(identifier)
+    const task = this.receiveTaskMap.get(identifier)
     if (task) {
       task.cancel()
     }
@@ -242,8 +206,8 @@ export class ImageSharingSystem {
   }
 
   private request(request: CatalogItem[], peer: string) {
-    console.log('requestFile() ' + peer)
-    let peers = Network.peerIds
+    console.log(`requestFile() ${peer}`)
+    const peers = Network.peerIds
     peers.splice(peers.indexOf(Network.peerId), 1)
     EventSystem.call(
       'REQUEST_FILE_RESOURE',
@@ -256,12 +220,12 @@ export class ImageSharingSystem {
     catalog: CatalogItem[],
     maxSize: number = 1024 * 1024 * 0.5,
   ): ImageContext[] {
-    let updateImages: ImageContext[] = []
-    let byteSize: number = 0
+    const updateImages: ImageContext[] = []
+    let byteSize = 0
 
     // Fisher-Yates
-    for (let i = catalog.length - 1; 0 <= i; i--) {
-      let rand = Math.floor(Math.random() * (i + 1))
+    for (let i = catalog.length - 1; i >= 0; i--) {
+      const rand = Math.floor(Math.random() * (i + 1))
       ;[catalog[i], catalog[rand]] = [catalog[rand], catalog[i]]
     }
 
@@ -272,10 +236,10 @@ export class ImageSharingSystem {
     })
 
     for (let i = 0; i < catalog.length; i++) {
-      let item: { identifier: string; state: number } = catalog[i]
-      let image: ImageFile = ImageStorage.instance.get(item.identifier)
+      const item: { identifier: string; state: number } = catalog[i]
+      const image: ImageFile = ImageStorage.instance.get(item.identifier)
 
-      let context: ImageContext = {
+      const context: ImageContext = {
         identifier: image.identifier,
         name: image.name,
         type: '',
@@ -294,7 +258,7 @@ export class ImageSharingSystem {
         context.type = image.blob.type
       }
 
-      let size = context.blob
+      const size = context.blob
         ? context.blob.size
         : context.thumbnail.blob
         ? context.thumbnail.blob.size
@@ -308,7 +272,7 @@ export class ImageSharingSystem {
   }
 
   private hasActiveTask(): boolean {
-    return 0 < this.sendTaskMap.size || 0 < this.receiveTaskMap.size
+    return this.sendTaskMap.size > 0 || this.receiveTaskMap.size > 0
   }
 
   private isLimitSendTask(): boolean {
@@ -320,7 +284,7 @@ export class ImageSharingSystem {
   }
 
   private existsSendTask(peer: string): boolean {
-    for (let task of this.sendTaskMap.values()) {
+    for (const task of this.sendTaskMap.values()) {
       if (task && task.sendTo === peer) return true
     }
     return false
@@ -328,24 +292,24 @@ export class ImageSharingSystem {
 }
 
 function convertUrlImage(xmlElement: Element) {
-  let urls: string[] = []
+  const urls: string[] = []
 
   let imageElements = xmlElement.querySelectorAll('*[type="image"]')
   for (let i = 0; i < imageElements.length; i++) {
-    let url = imageElements[i].innerHTML
-    if (!ImageStorage.instance.get(url) && 0 < MimeType.type(url).length) {
+    const url = imageElements[i].innerHTML
+    if (!ImageStorage.instance.get(url) && MimeType.type(url).length > 0) {
       urls.push(url)
     }
   }
 
   imageElements = xmlElement.querySelectorAll('*[imageIdentifier]')
   for (let i = 0; i < imageElements.length; i++) {
-    let url = imageElements[i].getAttribute('imageIdentifier')
-    if (!ImageStorage.instance.get(url) && 0 < MimeType.type(url).length) {
+    const url = imageElements[i].getAttribute('imageIdentifier')
+    if (!ImageStorage.instance.get(url) && MimeType.type(url).length > 0) {
       urls.push(url)
     }
   }
-  for (let url of urls) {
+  for (const url of urls) {
     ImageStorage.instance.add(url)
   }
 }

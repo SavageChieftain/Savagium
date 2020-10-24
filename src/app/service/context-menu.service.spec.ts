@@ -1,15 +1,15 @@
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing'
 
-import { ContextMenuService } from './context-menu.service';
+import { ContextMenuService } from './context-menu.service'
 
 describe('ContextMenuService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ContextMenuService]
-    });
-  });
+      providers: [ContextMenuService],
+    })
+  })
 
   it('should ...', inject([ContextMenuService], (service: ContextMenuService) => {
-    expect(service).toBeTruthy();
-  }));
-});
+    expect(service).toBeTruthy()
+  }))
+})

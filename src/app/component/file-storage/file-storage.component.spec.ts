@@ -1,25 +1,24 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 
-import { FileStorageComponent } from './file-storage.component';
+import { FileStorageComponent } from './file-storage.component'
 
 describe('FileStorageComponent', () => {
-  let component: FileStorageComponent;
-  let fixture: ComponentFixture<FileStorageComponent>;
+  let component: FileStorageComponent
+  let fixture: ComponentFixture<FileStorageComponent>
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FileStorageComponent ]
-    })
-    .compileComponents();
-  }));
+      declarations: [FileStorageComponent],
+    }).compileComponents()
+  }))
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FileStorageComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    fixture = TestBed.createComponent(FileStorageComponent)
+    component = fixture.componentInstance
+    fixture.detectChanges()
+  })
 
   it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
+    expect(component).toBeTruthy()
+  })
+})

@@ -1,10 +1,7 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core'
 
 import { AudioFile } from '@udonarium/core/file-storage/audio-file'
-import {
-  AudioPlayer,
-  VolumeType,
-} from '@udonarium/core/file-storage/audio-player'
+import { AudioPlayer, VolumeType } from '@udonarium/core/file-storage/audio-player'
 import { AudioStorage } from '@udonarium/core/file-storage/audio-storage'
 import { FileArchiver } from '@udonarium/core/file-storage/file-archiver'
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store'
@@ -23,6 +20,7 @@ export class JukeboxComponent implements OnInit, OnDestroy {
   get volume(): number {
     return AudioPlayer.volume
   }
+
   set volume(volume: number) {
     AudioPlayer.volume = volume
   }
@@ -30,6 +28,7 @@ export class JukeboxComponent implements OnInit, OnDestroy {
   get auditionVolume(): number {
     return AudioPlayer.auditionVolume
   }
+
   set auditionVolume(auditionVolume: number) {
     AudioPlayer.auditionVolume = auditionVolume
   }
@@ -37,16 +36,18 @@ export class JukeboxComponent implements OnInit, OnDestroy {
   get audios(): AudioFile[] {
     return AudioStorage.instance.audios.filter((audio) => !audio.isHidden)
   }
+
   get jukebox(): Jukebox {
     return ObjectStore.instance.get<Jukebox>('Jukebox')
   }
 
   readonly auditionPlayer: AudioPlayer = new AudioPlayer()
+
   private lazyUpdateTimer: NodeJS.Timer = null
 
   public selectedAudio: AudioFile | null = null
 
-  public broadCast: boolean = false
+  public broadCast = false
 
   constructor(
     private modalService: ModalService,
@@ -56,9 +57,7 @@ export class JukeboxComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     Promise.resolve().then(
-      () =>
-        (this.modalService.title = this.panelService.title =
-          'ジュークボックス'),
+      () => (this.modalService.title = this.panelService.title = 'ジュークボックス'),
     )
     this.auditionPlayer.volumeType = VolumeType.AUDITION
     EventSystem.register(this).on('*', (event) => {
@@ -110,7 +109,7 @@ export class JukeboxComponent implements OnInit, OnDestroy {
   }
 
   handleFileSelect(event: Event) {
-    let files = (<HTMLInputElement>event.target).files
+    const { files } = <HTMLInputElement>event.target
     if (files.length) FileArchiver.instance.load(files)
   }
 

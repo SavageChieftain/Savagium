@@ -3,10 +3,7 @@ import { Card } from '@udonarium/card'
 import { CardStack } from '@udonarium/card-stack'
 import { ChatTab } from '@udonarium/chat-tab'
 import { ChatTabList } from '@udonarium/chat-tab-list'
-import {
-  ImageContext,
-  ImageFile,
-} from '@udonarium/core/file-storage/image-file'
+import { ImageContext, ImageFile } from '@udonarium/core/file-storage/image-file'
 import { ImageStorage } from '@udonarium/core/file-storage/image-storage'
 import { ObjectSerializer } from '@udonarium/core/synchronize-object/object-serializer'
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store'
@@ -23,10 +20,7 @@ import { Terrain } from '@udonarium/terrain'
 import { TextNote } from '@udonarium/text-note'
 
 import { ContextMenuAction } from './context-menu.service'
-import {
-  PointerCoordinate,
-  PointerDeviceService,
-} from './pointer-device.service'
+import { PointerCoordinate, PointerDeviceService } from './pointer-device.service'
 
 type ObjectIdentifier = string
 type LocationName = string
@@ -36,43 +30,50 @@ export class TabletopService {
   dragAreaElement: HTMLElement = document.body
 
   private batchTask: Map<any, Function> = new Map()
+
   private batchTaskTimer: NodeJS.Timer = null
 
   private _emptyTable: GameTable = new GameTable('')
+
   get tableSelecter(): TableSelecter {
     return ObjectStore.instance.get<TableSelecter>('tableSelecter')
   }
+
   get currentTable(): GameTable {
-    let table = this.tableSelecter.viewTable
-    return table ? table : this._emptyTable
+    const table = this.tableSelecter.viewTable
+    return table || this._emptyTable
   }
 
   private locationMap: Map<ObjectIdentifier, LocationName> = new Map()
+
   private parentMap: Map<ObjectIdentifier, ObjectIdentifier> = new Map()
+
   private characterCache = new TabletopCache<GameCharacter>(() =>
-    ObjectStore.instance
-      .getObjects(GameCharacter)
-      .filter((obj) => obj.isVisibleOnTable),
+    ObjectStore.instance.getObjects(GameCharacter).filter((obj) => obj.isVisibleOnTable),
   )
+
   private cardCache = new TabletopCache<Card>(() =>
     ObjectStore.instance.getObjects(Card).filter((obj) => obj.isVisibleOnTable),
   )
+
   private cardStackCache = new TabletopCache<CardStack>(() =>
-    ObjectStore.instance
-      .getObjects(CardStack)
-      .filter((obj) => obj.isVisibleOnTable),
+    ObjectStore.instance.getObjects(CardStack).filter((obj) => obj.isVisibleOnTable),
   )
+
   private tableMaskCache = new TabletopCache<GameTableMask>(() => {
-    let viewTable = this.tableSelecter.viewTable
+    const { viewTable } = this.tableSelecter
     return viewTable ? viewTable.masks : []
   })
+
   private terrainCache = new TabletopCache<Terrain>(() => {
-    let viewTable = this.tableSelecter.viewTable
+    const { viewTable } = this.tableSelecter
     return viewTable ? viewTable.terrains : []
   })
+
   private textNoteCache = new TabletopCache<TextNote>(() =>
     ObjectStore.instance.getObjects(TextNote),
   )
+
   private diceSymbolCache = new TabletopCache<DiceSymbol>(() =>
     ObjectStore.instance.getObjects(DiceSymbol),
   )
@@ -80,32 +81,36 @@ export class TabletopService {
   get characters(): GameCharacter[] {
     return this.characterCache.objects
   }
+
   get cards(): Card[] {
     return this.cardCache.objects
   }
+
   get cardStacks(): CardStack[] {
     return this.cardStackCache.objects
   }
+
   get tableMasks(): GameTableMask[] {
     return this.tableMaskCache.objects
   }
+
   get terrains(): Terrain[] {
     return this.terrainCache.objects
   }
+
   get textNotes(): TextNote[] {
     return this.textNoteCache.objects
   }
+
   get diceSymbols(): DiceSymbol[] {
     return this.diceSymbolCache.objects
   }
+
   get peerCursors(): PeerCursor[] {
     return ObjectStore.instance.getObjects<PeerCursor>(PeerCursor)
   }
 
-  constructor(
-    public ngZone: NgZone,
-    public pointerDeviceService: PointerDeviceService,
-  ) {
+  constructor(public ngZone: NgZone, public pointerDeviceService: PointerDeviceService) {
     this.initialize()
   }
 
@@ -122,7 +127,7 @@ export class TabletopService {
           return
         }
 
-        let object = ObjectStore.instance.get(event.data.identifier)
+        const object = ObjectStore.instance.get(event.data.identifier)
         if (!object || !(object instanceof TabletopObject)) {
           this.refreshCache(event.data.aliasName)
         } else if (this.shouldRefreshCache(object)) {
@@ -131,7 +136,7 @@ export class TabletopService {
         }
       })
       .on('DELETE_GAME_OBJECT', -1000, (event) => {
-        let garbage = ObjectStore.instance.get(event.data.identifier)
+        const garbage = ObjectStore.instance.get(event.data.identifier)
         if (garbage == null || garbage.aliasName.length < 1) {
           this.refreshCacheAll()
         } else {
@@ -139,11 +144,11 @@ export class TabletopService {
         }
       })
       .on('XML_LOADED', (event) => {
-        let xmlElement: Element = event.data.xmlElement
+        const { xmlElement } = event.data
         // todo:立体地形の上にドロップした時の挙動
-        let gameObject = ObjectSerializer.instance.parseXml(xmlElement)
+        const gameObject = ObjectSerializer.instance.parseXml(xmlElement)
         if (gameObject instanceof TabletopObject) {
-          let pointer = this.calcTabletopLocalCoordinate()
+          const pointer = this.calcTabletopLocalCoordinate()
           gameObject.location.x = pointer.x - 25
           gameObject.location.y = pointer.y - 25
           gameObject.posZ = pointer.z
@@ -160,7 +165,7 @@ export class TabletopService {
     if (this.batchTaskTimer != null) return
     this.execBatch()
     this.batchTaskTimer = setInterval(() => {
-      if (0 < this.batchTask.size) {
+      if (this.batchTask.size > 0) {
         this.execBatch()
       } else {
         clearInterval(this.batchTaskTimer)
@@ -200,7 +205,7 @@ export class TabletopService {
   }
 
   private refreshCache(aliasName: string) {
-    let cache = this.findCache(aliasName)
+    const cache = this.findCache(aliasName)
     if (cache) cache.refresh()
   }
 
@@ -217,17 +222,13 @@ export class TabletopService {
   }
 
   private shouldRefreshCache(object: TabletopObject) {
-    if (
-      this.locationMap.has(object.identifier) ||
-      this.parentMap.has(object.identifier)
-    ) {
+    if (this.locationMap.has(object.identifier) || this.parentMap.has(object.identifier)) {
       return (
         this.locationMap.get(object.identifier) !== object.location.name ||
         this.parentMap.get(object.identifier) !== object.parentId
       )
-    } else {
-      return object.isVisibleOnTable
     }
+    return object.isVisibleOnTable
   }
 
   private updateMap(object: TabletopObject) {
@@ -260,12 +261,9 @@ export class TabletopService {
     y: number = this.pointerDeviceService.pointers[0].y,
     target: HTMLElement = this.pointerDeviceService.targetElement,
   ): PointerCoordinate {
-    let coordinate: PointerCoordinate = { x: x, y: y, z: 0 }
+    let coordinate: PointerCoordinate = { x, y, z: 0 }
     if (target.contains(this.dragAreaElement)) {
-      coordinate = PointerDeviceService.convertToLocal(
-        coordinate,
-        this.dragAreaElement,
-      )
+      coordinate = PointerDeviceService.convertToLocal(coordinate, this.dragAreaElement)
       coordinate.z = 0
     } else {
       coordinate = PointerDeviceService.convertLocalToLocal(
@@ -277,12 +275,12 @@ export class TabletopService {
     return {
       x: coordinate.x,
       y: coordinate.y,
-      z: 0 < coordinate.z ? coordinate.z : 0,
+      z: coordinate.z > 0 ? coordinate.z : 0,
     }
   }
 
   createGameCharacter(position: PointerCoordinate): GameCharacter {
-    let character = GameCharacter.create('新しいキャラクター', 1, '')
+    const character = GameCharacter.create('新しいキャラクター', 1, '')
     character.location.x = position.x - 25
     character.location.y = position.y - 25
     character.posZ = position.z
@@ -290,10 +288,10 @@ export class TabletopService {
   }
 
   createGameTableMask(position: PointerCoordinate): GameTableMask {
-    let viewTable = this.tableSelecter.viewTable
+    const { viewTable } = this.tableSelecter
     if (!viewTable) return
 
-    let tableMask = GameTableMask.create('マップマスク', 5, 5, 100)
+    const tableMask = GameTableMask.create('マップマスク', 5, 5, 100)
     tableMask.location.x = position.x - 25
     tableMask.location.y = position.y - 25
     tableMask.posZ = position.z
@@ -303,21 +301,14 @@ export class TabletopService {
   }
 
   createTerrain(position: PointerCoordinate): Terrain {
-    let url: string = './assets/images/tex.jpg'
+    const url = './assets/images/tex.jpg'
     let image: ImageFile = ImageStorage.instance.get(url)
     if (!image) image = ImageStorage.instance.add(url)
 
-    let viewTable = this.tableSelecter.viewTable
+    const { viewTable } = this.tableSelecter
     if (!viewTable) return
 
-    let terrain = Terrain.create(
-      '地形',
-      2,
-      2,
-      2,
-      image.identifier,
-      image.identifier,
-    )
+    const terrain = Terrain.create('地形', 2, 2, 2, image.identifier, image.identifier)
     terrain.location.x = position.x - 50
     terrain.location.y = position.y - 50
     terrain.posZ = position.z
@@ -327,13 +318,7 @@ export class TabletopService {
   }
 
   createTextNote(position: PointerCoordinate): TextNote {
-    let textNote = TextNote.create(
-      '共有メモ',
-      'テキストを入力してください',
-      5,
-      4,
-      3,
-    )
+    const textNote = TextNote.create('共有メモ', 'テキストを入力してください', 5, 4, 3)
     textNote.location.x = position.x
     textNote.location.y = position.y
     textNote.posZ = position.z
@@ -346,17 +331,16 @@ export class TabletopService {
     diceType: DiceType,
     imagePathPrefix: string,
   ): DiceSymbol {
-    let diceSymbol = DiceSymbol.create(name, diceType, 1)
+    const diceSymbol = DiceSymbol.create(name, diceType, 1)
     let image: ImageFile = null
 
     diceSymbol.faces.forEach((face) => {
-      let url: string = `./assets/images/dice/${imagePathPrefix}/${imagePathPrefix}[${face}].png`
+      const url = `./assets/images/dice/${imagePathPrefix}/${imagePathPrefix}[${face}].png`
       image = ImageStorage.instance.get(url)
       if (!image) {
         image = ImageStorage.instance.add(url)
       }
-      diceSymbol.imageDataElement.getFirstElementByName(face).value =
-        image.identifier
+      diceSymbol.imageDataElement.getFirstElementByName(face).value = image.identifier
     })
 
     diceSymbol.location.x = position.x - 25
@@ -366,60 +350,58 @@ export class TabletopService {
   }
 
   createTrump(position: PointerCoordinate): CardStack {
-    let cardStack = CardStack.create('トランプ山札')
+    const cardStack = CardStack.create('トランプ山札')
     cardStack.location.x = position.x - 25
     cardStack.location.y = position.y - 25
     cardStack.posZ = position.z
 
-    let back: string = './assets/images/trump/z02.gif'
+    const back = './assets/images/trump/z02.gif'
     if (!ImageStorage.instance.get(back)) {
       ImageStorage.instance.add(back)
     }
 
-    let names: string[] = ['c', 'd', 'h', 's']
+    const names: string[] = ['c', 'd', 'h', 's']
 
-    for (let name of names) {
+    for (const name of names) {
       for (let i = 1; i <= 13; i++) {
-        let trump: string = name + ('00' + i).slice(-2)
-        let url: string = './assets/images/trump/' + trump + '.gif'
+        const trump: string = name + `00${i}`.slice(-2)
+        const url = `./assets/images/trump/${trump}.gif`
         if (!ImageStorage.instance.get(url)) {
           ImageStorage.instance.add(url)
         }
-        let card = Card.create('カード', url, back)
+        const card = Card.create('カード', url, back)
         cardStack.putOnBottom(card)
       }
     }
 
     for (let i = 1; i <= 2; i++) {
-      let trump: string = 'x' + ('00' + i).slice(-2)
-      let url: string = './assets/images/trump/' + trump + '.gif'
+      const trump = `x${`00${i}`.slice(-2)}`
+      const url = `./assets/images/trump/${trump}.gif`
       if (!ImageStorage.instance.get(url)) {
         ImageStorage.instance.add(url)
       }
-      let card = Card.create('カード', url, back)
+      const card = Card.create('カード', url, back)
       cardStack.putOnBottom(card)
     }
     return cardStack
   }
 
   makeDefaultTable() {
-    let tableSelecter = new TableSelecter('tableSelecter')
+    const tableSelecter = new TableSelecter('tableSelecter')
     tableSelecter.initialize()
 
-    let gameTable = new GameTable('gameTable')
+    const gameTable = new GameTable('gameTable')
     let testBgFile: ImageFile = null
-    let bgFileContext = ImageFile.createEmpty(
-      'testTableBackgroundImage_image',
-    ).toContext()
+    const bgFileContext = ImageFile.createEmpty('testTableBackgroundImage_image').toContext()
     bgFileContext.url = './assets/images/BG10a_80.jpg'
     testBgFile = ImageStorage.instance.add(bgFileContext)
-    //let testDistanceFile: ImageFile = null;
-    //let distanceFileContext = ImageFile.createEmpty('testTableDistanceviewImage_image').toContext();
-    //distanceFileContext.url = './assets/images/BG00a1_80.jpg';
-    //testDistanceFile = ImageStorage.instance.add(distanceFileContext);
+    // let testDistanceFile: ImageFile = null;
+    // let distanceFileContext = ImageFile.createEmpty('testTableDistanceviewImage_image').toContext();
+    // distanceFileContext.url = './assets/images/BG00a1_80.jpg';
+    // testDistanceFile = ImageStorage.instance.add(distanceFileContext);
     gameTable.name = '最初のテーブル'
     gameTable.imageIdentifier = testBgFile.identifier
-    //gameTable.backgroundImageIdentifier = testDistanceFile.identifier;
+    // gameTable.backgroundImageIdentifier = testDistanceFile.identifier;
     gameTable.width = 20
     gameTable.height = 15
     gameTable.initialize()
@@ -439,21 +421,13 @@ export class TabletopService {
     testCharacter.location.x = 5 * 50
     testCharacter.location.y = 9 * 50
     testCharacter.initialize()
-    testCharacter.createTestGameDataElement(
-      'モンスターA',
-      1,
-      testFile.identifier,
-    )
+    testCharacter.createTestGameDataElement('モンスターA', 1, testFile.identifier)
 
     testCharacter = new GameCharacter('testCharacter_2')
     testCharacter.location.x = 8 * 50
     testCharacter.location.y = 8 * 50
     testCharacter.initialize()
-    testCharacter.createTestGameDataElement(
-      'モンスターB',
-      1,
-      testFile.identifier,
-    )
+    testCharacter.createTestGameDataElement('モンスターB', 1, testFile.identifier)
 
     testCharacter = new GameCharacter('testCharacter_3')
     fileContext = ImageFile.createEmpty('testCharacter_3_image').toContext()
@@ -462,11 +436,7 @@ export class TabletopService {
     testCharacter.location.x = 4 * 50
     testCharacter.location.y = 2 * 50
     testCharacter.initialize()
-    testCharacter.createTestGameDataElement(
-      'モンスターC',
-      3,
-      testFile.identifier,
-    )
+    testCharacter.createTestGameDataElement('モンスターC', 3, testFile.identifier)
 
     testCharacter = new GameCharacter('testCharacter_4')
     fileContext = ImageFile.createEmpty('testCharacter_4_image').toContext()
@@ -475,11 +445,7 @@ export class TabletopService {
     testCharacter.location.x = 6 * 50
     testCharacter.location.y = 11 * 50
     testCharacter.initialize()
-    testCharacter.createTestGameDataElement(
-      'キャラクターA',
-      1,
-      testFile.identifier,
-    )
+    testCharacter.createTestGameDataElement('キャラクターA', 1, testFile.identifier)
 
     testCharacter = new GameCharacter('testCharacter_5')
     fileContext = ImageFile.createEmpty('testCharacter_5_image').toContext()
@@ -488,11 +454,7 @@ export class TabletopService {
     testCharacter.location.x = 12 * 50
     testCharacter.location.y = 12 * 50
     testCharacter.initialize()
-    testCharacter.createTestGameDataElement(
-      'キャラクターB',
-      1,
-      testFile.identifier,
-    )
+    testCharacter.createTestGameDataElement('キャラクターB', 1, testFile.identifier)
 
     testCharacter = new GameCharacter('testCharacter_6')
     fileContext = ImageFile.createEmpty('testCharacter_6_image').toContext()
@@ -501,16 +463,10 @@ export class TabletopService {
     testCharacter.initialize()
     testCharacter.location.x = 5 * 50
     testCharacter.location.y = 13 * 50
-    testCharacter.createTestGameDataElement(
-      'キャラクターC',
-      1,
-      testFile.identifier,
-    )
+    testCharacter.createTestGameDataElement('キャラクターC', 1, testFile.identifier)
   }
 
-  getContextMenuActionsForCreateObject(
-    position: PointerCoordinate,
-  ): ContextMenuAction[] {
+  getContextMenuActionsForCreateObject(position: PointerCoordinate): ContextMenuAction[] {
     return [
       this.getCreateCharacterMenu(position),
       this.getCreateTableMaskMenu(position),
@@ -521,13 +477,11 @@ export class TabletopService {
     ]
   }
 
-  private getCreateCharacterMenu(
-    position: PointerCoordinate,
-  ): ContextMenuAction {
+  private getCreateCharacterMenu(position: PointerCoordinate): ContextMenuAction {
     return {
       name: 'キャラクターを作成',
       action: () => {
-        let character = this.createGameCharacter(position)
+        const character = this.createGameCharacter(position)
         EventSystem.trigger('SELECT_TABLETOP_OBJECT', {
           identifier: character.identifier,
           className: character.aliasName,
@@ -537,9 +491,7 @@ export class TabletopService {
     }
   }
 
-  private getCreateTableMaskMenu(
-    position: PointerCoordinate,
-  ): ContextMenuAction {
+  private getCreateTableMaskMenu(position: PointerCoordinate): ContextMenuAction {
     return {
       name: 'マップマスクを作成',
       action: () => {
@@ -559,9 +511,7 @@ export class TabletopService {
     }
   }
 
-  private getCreateTextNoteMenu(
-    position: PointerCoordinate,
-  ): ContextMenuAction {
+  private getCreateTextNoteMenu(position: PointerCoordinate): ContextMenuAction {
     return {
       name: '共有メモを作成',
       action: () => {
@@ -581,10 +531,8 @@ export class TabletopService {
     }
   }
 
-  private getCreateDiceSymbolMenu(
-    position: PointerCoordinate,
-  ): ContextMenuAction {
-    let dices: {
+  private getCreateDiceSymbolMenu(position: PointerCoordinate): ContextMenuAction {
+    const dices: {
       menuName: string
       diceName: string
       type: DiceType
@@ -633,18 +581,13 @@ export class TabletopService {
         imagePathPrefix: '20_dice',
       },
     ]
-    let subMenus: ContextMenuAction[] = []
+    const subMenus: ContextMenuAction[] = []
 
     dices.forEach((item) => {
       subMenus.push({
         name: item.menuName,
         action: () => {
-          this.createDiceSymbol(
-            position,
-            item.diceName,
-            item.type,
-            item.imagePathPrefix,
-          )
+          this.createDiceSymbol(position, item.diceName, item.type, item.imagePathPrefix)
           SoundEffect.play(PresetSound.dicePut)
         },
       })
@@ -654,9 +597,10 @@ export class TabletopService {
 }
 
 class TabletopCache<T extends TabletopObject> {
-  private needsRefresh: boolean = true
+  private needsRefresh = true
 
   private _objects: T[] = []
+
   get objects(): T[] {
     if (this.needsRefresh) {
       this._objects = this.refreshCollector()

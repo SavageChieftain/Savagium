@@ -14,29 +14,33 @@ export enum CardState {
 @SyncObject('card')
 export class Card extends TabletopObject {
   @SyncVar() state: CardState = CardState.FRONT
-  @SyncVar() rotate: number = 0
-  @SyncVar() owner: string = ''
-  @SyncVar() zindex: number = 0
+
+  @SyncVar() rotate = 0
+
+  @SyncVar() owner = ''
+
+  @SyncVar() zindex = 0
 
   get isVisibleOnTable(): boolean {
-    return (
-      this.location.name === 'table' &&
-      (!this.parentIsAssigned || this.parentIsDestroyed)
-    )
+    return this.location.name === 'table' && (!this.parentIsAssigned || this.parentIsDestroyed)
   }
 
   get name(): string {
     return this.getCommonValue('name', '')
   }
+
   get size(): number {
     return this.getCommonValue('size', 2)
   }
+
   set size(size: number) {
     this.setCommonValue('size', size)
   }
+
   get frontImage(): ImageFile {
     return this.getImageFile('front')
   }
+
   get backImage(): ImageFile {
     return this.getImageFile('back')
   }
@@ -46,19 +50,22 @@ export class Card extends TabletopObject {
   }
 
   get ownerName(): string {
-    let object = PeerCursor.find(this.owner)
+    const object = PeerCursor.find(this.owner)
     return object ? object.name : ''
   }
 
   get hasOwner(): boolean {
     return PeerCursor.find(this.owner) != null
   }
+
   get isHand(): boolean {
     return Network.peerId === this.owner
   }
+
   get isFront(): boolean {
     return this.state === CardState.FRONT
   }
+
   get isVisible(): boolean {
     return this.isHand || this.isFront
   }
@@ -94,26 +101,16 @@ export class Card extends TabletopObject {
     object.createDataElements()
 
     object.commonDataElement.appendChild(
-      DataElement.create('name', name, {}, 'name_' + object.identifier),
+      DataElement.create('name', name, {}, `name_${object.identifier}`),
     )
     object.commonDataElement.appendChild(
-      DataElement.create('size', size, {}, 'size_' + object.identifier),
+      DataElement.create('size', size, {}, `size_${object.identifier}`),
     )
     object.imageDataElement.appendChild(
-      DataElement.create(
-        'front',
-        fornt,
-        { type: 'image' },
-        'front_' + object.identifier,
-      ),
+      DataElement.create('front', fornt, { type: 'image' }, `front_${object.identifier}`),
     )
     object.imageDataElement.appendChild(
-      DataElement.create(
-        'back',
-        back,
-        { type: 'image' },
-        'back_' + object.identifier,
-      ),
+      DataElement.create('back', back, { type: 'image' }, `back_${object.identifier}`),
     )
     object.initialize()
 

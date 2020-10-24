@@ -24,7 +24,8 @@ export class AppConfigService {
   constructor() {}
 
   peerHistory: string[] = []
-  isOpen: boolean = false
+
+  isOpen = false
 
   static appConfig: AppConfig = {
     webrtc: {
@@ -50,9 +51,9 @@ export class AppConfigService {
       return
     }
 
-    let db = new Database()
+    const db = new Database()
 
-    let history = await db.getPeerHistory()
+    const history = await db.getPeerHistory()
     history.sort((a, b) => {
       if (a.timestamp < b.timestamp) return 1
       if (a.timestamp > b.timestamp) return -1
@@ -67,7 +68,7 @@ export class AppConfigService {
 
     this.peerHistory = []
     if (history.length) {
-      for (let historyId of history[0].history) {
+      for (const historyId of history[0].history) {
         if (historyId !== history[0].peerId) {
           this.peerHistory.push(historyId)
         }
@@ -91,8 +92,8 @@ export class AppConfigService {
   private async initAppConfig() {
     try {
       console.log('YAML読み込み...')
-      let config = await this.loadYaml()
-      let obj = yaml.safeLoad(config)
+      const config = await this.loadYaml()
+      const obj = yaml.safeLoad(config)
       AppConfigService.applyConfig(obj)
       console.log(AppConfigService.appConfig)
     } catch (e) {
@@ -103,7 +104,7 @@ export class AppConfigService {
 
   private loadYaml(): Promise<string> {
     return new Promise((resolve, reject) => {
-      let config = document.querySelector('script[type$="yaml"]')
+      const config = document.querySelector('script[type$="yaml"]')
       if (!config) {
         console.warn('loadYaml element not found.')
         resolve('')
@@ -112,7 +113,7 @@ export class AppConfigService {
 
       console.log('loadYaml ready...', config)
       let configString = config.textContent
-      let url = config.getAttribute('src')
+      const url = config.getAttribute('src')
 
       if (url == null) {
         console.warn('loadYaml url undefined.')
@@ -120,7 +121,7 @@ export class AppConfigService {
         return
       }
 
-      let http = new XMLHttpRequest()
+      const http = new XMLHttpRequest()
       http.open('get', url, true)
       http.onerror = (event) => {
         console.error(event)
@@ -134,7 +135,7 @@ export class AppConfigService {
           console.log('loadYaml success!')
           configString = http.responseText
         } else {
-          console.warn('loadYaml fail...? status:' + http.status)
+          console.warn(`loadYaml fail...? status:${http.status}`)
         }
         resolve(configString)
       }
@@ -143,11 +144,8 @@ export class AppConfigService {
     })
   }
 
-  private static applyConfig(
-    config: Object,
-    root: Object = AppConfigService.appConfig,
-  ): Object {
-    for (let key in config) {
+  private static applyConfig(config: Object, root: Object = AppConfigService.appConfig): Object {
+    for (const key in config) {
       if (isArray(config[key])) {
         root[key] = []
         config[key].map((val) => {

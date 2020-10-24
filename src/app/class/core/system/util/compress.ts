@@ -2,10 +2,7 @@ import * as Pako from 'pako'
 
 import { setZeroTimeout } from './zero-timeout'
 
-export async function compressAsync(
-  data: Uint8Array,
-  chunkSize?: number,
-): Promise<Uint8Array> {
+export async function compressAsync(data: Uint8Array, chunkSize?: number): Promise<Uint8Array> {
   const deflate = new Pako.Deflate({ level: 2, gzip: true })
 
   try {
@@ -17,10 +14,7 @@ export async function compressAsync(
   return null
 }
 
-export async function decompressAsync(
-  data: Uint8Array,
-  chunkSize?: number,
-): Promise<Uint8Array> {
+export async function decompressAsync(data: Uint8Array, chunkSize?: number): Promise<Uint8Array> {
   const inflate = new Pako.Inflate()
 
   try {
@@ -37,7 +31,7 @@ async function processAsync<T extends Pako.Deflate | Pako.Inflate>(
   data: Uint8Array,
   chunkSize: number = 16 * 1024,
 ): Promise<T> {
-  let total = Math.ceil(data.byteLength / chunkSize)
+  const total = Math.ceil(data.byteLength / chunkSize)
   let sliceData: Uint8Array = null
 
   for (let sliceIndex = 0; sliceIndex < total; sliceIndex++) {

@@ -1,25 +1,24 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 
-import { FileSelecterComponent } from './file-selecter.component';
+import { FileSelecterComponent } from './file-selecter.component'
 
 describe('FileSelecterComponent', () => {
-  let component: FileSelecterComponent;
-  let fixture: ComponentFixture<FileSelecterComponent>;
+  let component: FileSelecterComponent
+  let fixture: ComponentFixture<FileSelecterComponent>
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FileSelecterComponent ]
-    })
-    .compileComponents();
-  }));
+      declarations: [FileSelecterComponent],
+    }).compileComponents()
+  }))
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FileSelecterComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    fixture = TestBed.createComponent(FileSelecterComponent)
+    component = fixture.componentInstance
+    fixture.detectChanges()
+  })
 
   it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
+    expect(component).toBeTruthy()
+  })
+})

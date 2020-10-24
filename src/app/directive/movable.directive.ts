@@ -12,10 +12,7 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store'
 import { EventSystem } from '@udonarium/core/system'
 import { TableSelecter } from '@udonarium/table-selecter'
 import { TabletopObject } from '@udonarium/tabletop-object'
-import {
-  PointerCoordinate,
-  PointerDeviceService,
-} from 'service/pointer-device.service'
+import { PointerCoordinate, PointerDeviceService } from 'service/pointer-device.service'
 import { TabletopService } from 'service/tabletop.service'
 
 import { InputHandler } from './input-handler'
@@ -34,78 +31,85 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
   private static layerHash: { [layerName: string]: MovableDirective[] } = {}
 
   private tabletopObject: TabletopObject
-  private layerName: string = ''
+
+  private layerName = ''
+
   private colideLayers: string[] = []
-  private transformCssOffset: string = ''
+
+  private transformCssOffset = ''
 
   @Input('movable.option') set option(option: MovableOption) {
     this.tabletopObject =
-      option.tabletopObject != null
-        ? option.tabletopObject
-        : this.tabletopObject
-    this.layerName =
-      option.layerName != null ? option.layerName : this.layerName
-    this.colideLayers =
-      option.colideLayers != null ? option.colideLayers : this.colideLayers
+      option.tabletopObject != null ? option.tabletopObject : this.tabletopObject
+    this.layerName = option.layerName != null ? option.layerName : this.layerName
+    this.colideLayers = option.colideLayers != null ? option.colideLayers : this.colideLayers
     this.transformCssOffset =
-      option.transformCssOffset != null
-        ? option.transformCssOffset
-        : this.transformCssOffset
+      option.transformCssOffset != null ? option.transformCssOffset : this.transformCssOffset
   }
-  @Input('movable.disable') isDisable: boolean = false
-  @Output('movable.onstart') onstart: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('movable.ondragstart') ondragstart: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('movable.ondrag') ondrag: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('movable.ondragend') ondragend: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('movable.onend') onend: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
 
-  private _posX: number = 0
-  private _posY: number = 0
-  private _posZ: number = 0
+  @Input('movable.disable') isDisable = false
+
+  @Output('movable.onstart') onstart: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('movable.ondragstart') ondragstart: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('movable.ondrag') ondrag: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('movable.ondragend') ondragend: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('movable.onend') onend: EventEmitter<PointerEvent> = new EventEmitter()
+
+  private _posX = 0
+
+  private _posY = 0
+
+  private _posZ = 0
 
   get posX(): number {
     return this._posX
   }
+
   set posX(posX: number) {
     this._posX = posX
     this.setUpdateTimer()
   }
+
   get posY(): number {
     return this._posY
   }
+
   set posY(posY: number) {
     this._posY = posY
     this.setUpdateTimer()
   }
+
   get posZ(): number {
     return this._posZ
   }
+
   set posZ(posZ: number) {
     this._posZ = posZ
     this.setUpdateTimer()
   }
 
   private pointer3d: PointerCoordinate = { x: 0, y: 0, z: 0 }
+
   private pointerOffset3d: PointerCoordinate = { x: 0, y: 0, z: 0 }
+
   private pointerStart3d: PointerCoordinate = { x: 0, y: 0, z: 0 }
+
   private pointerPrev3d: PointerCoordinate = { x: 0, y: 0, z: 0 }
 
-  private height: number = 0
-  private width: number = 0
-  private ratio: number = 1.0
+  private height = 0
+
+  private width = 0
+
+  private ratio = 1.0
 
   private updateTimer: NodeJS.Timer = null
+
   private collidableElements: HTMLElement[] = []
+
   private input: InputHandler = null
 
   constructor(
@@ -166,11 +170,7 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     this.callSelectedEvent()
     if (this.collidableElements.length < 1) this.findCollidableElements() // 稀にcollidableElementsの取得に失敗している
 
-    if (
-      this.isDisable ||
-      (e as MouseEvent).button === 1 ||
-      (e as MouseEvent).button === 2
-    )
+    if (this.isDisable || (e as MouseEvent).button === 1 || (e as MouseEvent).button === 2)
       return this.cancel()
     this.onstart.emit(e as PointerEvent)
 
@@ -178,7 +178,7 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     this.setAnimatedTransition(false)
     this.setCollidableLayer(true)
 
-    let target = document.elementFromPoint(
+    const target = document.elementFromPoint(
       this.input.pointer.x,
       this.input.pointer.y,
     ) as HTMLElement
@@ -203,17 +203,14 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
   }
 
   onInputMove(e: MouseEvent | TouchEvent) {
-    if (
-      this.input.isGrabbing &&
-      !this.tabletopService.pointerDeviceService.isDragging
-    ) {
+    if (this.input.isGrabbing && !this.tabletopService.pointerDeviceService.isDragging) {
       return this.cancel() // todo
     }
     if (this.isDisable || !this.input.isGrabbing) return this.cancel()
     if (e.cancelable) e.preventDefault()
 
     if (!this.input.isDragging) this.setPointerEvents(false)
-    let target = document.elementFromPoint(
+    const target = document.elementFromPoint(
       this.input.pointer.x,
       this.input.pointer.y,
     ) as HTMLElement
@@ -230,7 +227,7 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     if (!this.input.isDragging) this.ondragstart.emit(e as PointerEvent)
     this.ondrag.emit(e as PointerEvent)
 
-    let ratio = this.calcDistanceRatio(this.pointerStart3d, this.pointer3d)
+    const ratio = this.calcDistanceRatio(this.pointerStart3d, this.pointer3d)
     if (ratio < this.ratio) this.ratio = ratio
 
     this.pointerPrev3d.x = this.pointer3d.x
@@ -252,7 +249,7 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     if (this.isDisable) return this.cancel()
     if (this.input.isDragging) this.ondragend.emit(e as PointerEvent)
     this.cancel()
-    let tableSelecter = ObjectStore.instance.get<TableSelecter>('tableSelecter')
+    const tableSelecter = ObjectStore.instance.get<TableSelecter>('tableSelecter')
     if (tableSelecter.gridSnap) this.snapToGrid()
     this.onend.emit(e as PointerEvent)
   }
@@ -261,16 +258,16 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     if (this.isDisable) return this.cancel()
     if (e.cancelable) e.preventDefault()
 
-    let tableSelecter = ObjectStore.instance.get<TableSelecter>('tableSelecter')
+    const tableSelecter = ObjectStore.instance.get<TableSelecter>('tableSelecter')
     if (tableSelecter.gridSnap) this.snapToGrid()
 
-    let needsDispatch = this.input.isGrabbing && e.isTrusted
+    const needsDispatch = this.input.isGrabbing && e.isTrusted
     this.cancel()
 
     if (needsDispatch) {
       // ロングプレスによるタッチ操作でコンテキストメニューを開く場合、イベントを適切なDOMに伝搬させる
       e.stopPropagation()
-      let ev = new MouseEvent(e.type, e)
+      const ev = new MouseEvent(e.type, e)
       this.ngZone.run(() => this.input.target.dispatchEvent(ev))
     }
   }
@@ -303,23 +300,20 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     return {
       x: coordinate.x,
       y: coordinate.y,
-      z: 0 < coordinate.z ? coordinate.z : 0,
+      z: coordinate.z > 0 ? coordinate.z : 0,
     }
   }
 
-  private calcDistanceRatio(
-    start: PointerCoordinate,
-    now: PointerCoordinate,
-  ): number {
-    let width = this.collidableElements[0].clientWidth
-    let height = this.collidableElements[0].clientHeight
+  private calcDistanceRatio(start: PointerCoordinate, now: PointerCoordinate): number {
+    const width = this.collidableElements[0].clientWidth
+    const height = this.collidableElements[0].clientHeight
     let ratio: number = Math.sqrt(width * width + height * height)
     ratio = ratio < 1 ? 1 : ratio * 3
 
-    let distanceY = start.y - now.y
-    let distanceX = start.x - now.x
-    let distanceZ = (start.z - now.z) * 100
-    let distance = Math.sqrt(distanceY ** 2 + distanceX ** 2 + distanceZ ** 2)
+    const distanceY = start.y - now.y
+    const distanceX = start.x - now.x
+    const distanceZ = (start.z - now.z) * 100
+    const distance = Math.sqrt(distanceY ** 2 + distanceX ** 2 + distanceZ ** 2)
 
     return ratio / (distance + ratio)
   }
@@ -365,9 +359,9 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
 
   private findNestedCollidableElements(element: HTMLElement) {
     // TODO:不完全
-    let children = element.children
+    const { children } = element
     for (let i = 0; i < children.length; i++) {
-      let child = children[i]
+      const child = children[i]
       if (!(child instanceof HTMLElement)) continue
       if (getComputedStyle(child).pointerEvents !== 'none') {
         this.collidableElements.push(child)
@@ -375,7 +369,7 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
     }
     if (this.collidableElements.length < 1) {
       for (let i = 0; i < children.length; i++) {
-        let child = children[i]
+        const child = children[i]
         if (!(child instanceof HTMLElement)) continue
         this.findNestedCollidableElements(child)
       }
@@ -383,17 +377,13 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
   }
 
   private setPointerEvents(isEnable: boolean) {
-    let css = isEnable ? 'auto' : 'none'
-    this.collidableElements.forEach(
-      (element) => (element.style.pointerEvents = css),
-    )
+    const css = isEnable ? 'auto' : 'none'
+    this.collidableElements.forEach((element) => (element.style.pointerEvents = css))
   }
 
   private setAnimatedTransition(isEnable: boolean) {
     if (!this.input) return
-    this.input.target.style.transition = isEnable
-      ? 'transform 132ms linear'
-      : ''
+    this.input.target.style.transition = isEnable ? 'transform 132ms linear' : ''
   }
 
   private shouldTransition(object: TabletopObject): boolean {
@@ -405,30 +395,20 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
   }
 
   private stopTransition() {
-    this.input.target.style.transform = window.getComputedStyle(
-      this.input.target,
-    ).transform
+    this.input.target.style.transform = window.getComputedStyle(this.input.target).transform
   }
 
   private updateTransformCss() {
     if (!this.input) return
-    let css =
-      this.transformCssOffset +
-      ' translateX(' +
-      this.posX +
-      'px) translateY(' +
-      this.posY +
-      'px) translateZ(' +
-      this.posZ +
-      'px)'
+    const css = `${this.transformCssOffset} translateX(${this.posX}px) translateY(${this.posY}px) translateZ(${this.posZ}px)`
     this.input.target.style.transform = css
   }
 
   private setCollidableLayer(isCollidable: boolean) {
     // todo
     let isEnable = isCollidable
-    for (let layerName in MovableDirective.layerHash) {
-      if (-1 < this.colideLayers.indexOf(layerName)) {
+    for (const layerName in MovableDirective.layerHash) {
+      if (this.colideLayers.indexOf(layerName) > -1) {
         isEnable = this.input.isGrabbing ? isCollidable : true
       } else {
         isEnable = !isCollidable
@@ -443,13 +423,13 @@ export class MovableDirective implements AfterViewInit, OnDestroy {
   private register() {
     if (!(this.layerName in MovableDirective.layerHash))
       MovableDirective.layerHash[this.layerName] = []
-    let index = MovableDirective.layerHash[this.layerName].indexOf(this)
+    const index = MovableDirective.layerHash[this.layerName].indexOf(this)
     if (index < 0) MovableDirective.layerHash[this.layerName].push(this)
   }
 
   private unregister() {
     if (!(this.layerName in MovableDirective.layerHash)) return
-    let index = MovableDirective.layerHash[this.layerName].indexOf(this)
-    if (-1 < index) MovableDirective.layerHash[this.layerName].splice(index, 1)
+    const index = MovableDirective.layerHash[this.layerName].indexOf(this)
+    if (index > -1) MovableDirective.layerHash[this.layerName].splice(index, 1)
   }
 }

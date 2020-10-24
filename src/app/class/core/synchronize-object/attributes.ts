@@ -1,1 +1,1 @@
-export type Attributes = { [name: string]: number | string };
+export type Attributes = { [name: string]: number | string }

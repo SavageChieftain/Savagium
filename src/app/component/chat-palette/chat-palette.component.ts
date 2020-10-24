@@ -1,11 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-} from '@angular/core'
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core'
 import { ChatPalette } from '@udonarium/chat-palette'
 import { ChatTab } from '@udonarium/chat-tab'
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store'
@@ -25,36 +18,43 @@ import { PanelService } from 'service/panel.service'
 export class ChatPaletteComponent implements OnInit, OnDestroy {
   @ViewChild('chatInput', { static: true })
   chatInputComponent: ChatInputComponent
+
   @ViewChild('chatPlette') chatPletteElementRef: ElementRef<HTMLSelectElement>
+
   @Input() character: GameCharacter = null
 
   get palette(): ChatPalette {
     return this.character.chatPalette
   }
 
-  private _gameType: string = ''
+  private _gameType = ''
+
   get gameType(): string {
     return this._gameType
   }
+
   set gameType(gameType: string) {
     this._gameType = gameType
-    if (this.character.chatPalette)
-      this.character.chatPalette.dicebot = gameType
+    if (this.character.chatPalette) this.character.chatPalette.dicebot = gameType
   }
 
   get sendFrom(): string {
     return this.character.identifier
   }
+
   set sendFrom(sendFrom: string) {
     this.onSelectedCharacter(sendFrom)
   }
 
-  chatTabidentifier: string = ''
-  text: string = ''
-  sendTo: string = ''
+  chatTabidentifier = ''
 
-  isEdit: boolean = false
-  editPalette: string = ''
+  text = ''
+
+  sendTo = ''
+
+  isEdit = false
+
+  editPalette = ''
 
   private doubleClickTimer: NodeJS.Timer = null
 
@@ -65,20 +65,21 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   get chatTab(): ChatTab {
     return ObjectStore.instance.get<ChatTab>(this.chatTabidentifier)
   }
+
   get myPeer(): PeerCursor {
     return PeerCursor.myCursor
   }
+
   get otherPeers(): PeerCursor[] {
     return ObjectStore.instance.getObjects(PeerCursor)
   }
 
-  constructor(
-    public chatMessageService: ChatMessageService,
-    private panelService: PanelService,
-  ) {}
+  constructor(public chatMessageService: ChatMessageService, private panelService: PanelService) {}
 
-  private shouldUpdateCharacterList: boolean = true
+  private shouldUpdateCharacterList = true
+
   private _gameCharacters: GameCharacter[] = []
+
   get gameCharacters(): GameCharacter[] {
     if (this.shouldUpdateCharacterList) {
       this.shouldUpdateCharacterList = false
@@ -111,19 +112,15 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     this.chatTabidentifier = this.chatMessageService.chatTabs
       ? this.chatMessageService.chatTabs[0].identifier
       : ''
-    this.gameType = this.character.chatPalette
-      ? this.character.chatPalette.dicebot
-      : ''
+    this.gameType = this.character.chatPalette ? this.character.chatPalette.dicebot : ''
     EventSystem.register(this)
       .on('UPDATE_GAME_OBJECT', -1000, (event) => {
         if (event.data.aliasName !== GameCharacter.aliasName) return
         this.shouldUpdateCharacterList = true
         if (event.data.identifier !== this.sendFrom) return
-        let gameCharacter = ObjectStore.instance.get<GameCharacter>(
-          event.data.identifier,
-        )
+        const gameCharacter = ObjectStore.instance.get<GameCharacter>(event.data.identifier)
         if (gameCharacter && !this.allowsChat(gameCharacter)) {
-          if (0 < this.gameCharacters.length) {
+          if (this.gameCharacters.length > 0) {
             this.sendFrom = this.gameCharacters[0].identifier
           } else {
             this.sendFrom = this.myPeer.identifier
@@ -131,10 +128,7 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
         }
       })
       .on('DELETE_GAME_OBJECT', -1000, (event) => {
-        if (
-          this.character &&
-          this.character.identifier === event.data.identifier
-        ) {
+        if (this.character && this.character.identifier === event.data.identifier) {
           this.panelService.close()
         }
         if (this.chatTabidentifier === event.data.identifier) {
@@ -151,18 +145,16 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   }
 
   updatePanelTitle() {
-    this.panelService.title = this.character.name + ' のチャットパレット'
+    this.panelService.title = `${this.character.name} のチャットパレット`
   }
 
   onSelectedCharacter(identifier: string) {
     if (this.isEdit) this.toggleEditMode()
-    let object = ObjectStore.instance.get(identifier)
+    const object = ObjectStore.instance.get(identifier)
     if (object instanceof GameCharacter) {
       this.character = object
-      let gameType = this.character.chatPalette
-        ? this.character.chatPalette.dicebot
-        : ''
-      if (0 < gameType.length) this.gameType = gameType
+      const gameType = this.character.chatPalette ? this.character.chatPalette.dicebot : ''
+      if (gameType.length > 0) this.gameType = gameType
     }
     this.updatePanelTitle()
   }
@@ -184,17 +176,9 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     }
   }
 
-  sendChat(value: {
-    text: string
-    gameType: string
-    sendFrom: string
-    sendTo: string
-  }) {
+  sendChat(value: { text: string; gameType: string; sendFrom: string; sendTo: string }) {
     if (this.chatTab) {
-      let text = this.palette.evaluate(
-        value.text,
-        this.character.rootDataElement,
-      )
+      const text = this.palette.evaluate(value.text, this.character.rootDataElement)
       this.chatMessageService.sendMessage(
         this.chatTab,
         text,
@@ -211,9 +195,9 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   }
 
   toggleEditMode() {
-    this.isEdit = this.isEdit ? false : true
+    this.isEdit = !this.isEdit
     if (this.isEdit) {
-      this.editPalette = this.palette.value + ''
+      this.editPalette = `${this.palette.value}`
     } else {
       this.palette.setPalette(this.editPalette)
     }

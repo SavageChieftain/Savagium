@@ -12,25 +12,37 @@ interface ChankData {
 
 export class BufferSharingTask<T> {
   readonly identifier: string
+
   readonly sendTo: string
 
   private data: T
+
   private uint8Array: Uint8Array
+
   private chanks: Uint8Array[] = []
+
   private chankSize: number = 32 * 1024
-  private chankReceiveCount: number = 0
+
+  private chankReceiveCount = 0
+
   private sendChankTimer: number
 
   private sentChankIndex = 0
+
   private completedChankIndex = 0
 
   private startTime = 0
+
   private isCanceled = false
 
   private onstart: () => void
+
   onprogress: (task: BufferSharingTask<T>, loded: number, total: number) => void
+
   onfinish: (task: BufferSharingTask<T>, data: T) => void
+
   ontimeout: (task: BufferSharingTask<T>) => void
+
   oncancel: (task: BufferSharingTask<T>) => void
 
   private timeoutTimer: ResettableTimeout
@@ -41,18 +53,14 @@ export class BufferSharingTask<T> {
     this.data = data
   }
 
-  static createSendTask<T>(
-    identifier: string,
-    sendTo: string,
-    data?: T,
-  ): BufferSharingTask<T> {
-    let task = new BufferSharingTask(identifier, sendTo, data)
+  static createSendTask<T>(identifier: string, sendTo: string, data?: T): BufferSharingTask<T> {
+    const task = new BufferSharingTask(identifier, sendTo, data)
     task.onstart = () => task.initializeSend()
     return task
   }
 
   static createReceiveTask<T>(identifier: string): BufferSharingTask<T> {
-    let task = new BufferSharingTask<T>(identifier)
+    const task = new BufferSharingTask<T>(identifier)
     task.onstart = () => task.initializeReceive()
     return task
   }
@@ -88,8 +96,7 @@ export class BufferSharingTask<T> {
 
   cancel() {
     if (this.isCanceled) return
-    if (this.sendTo != null)
-      EventSystem.call('CANCEL_TASK_' + this.identifier, null, this.sendTo)
+    if (this.sendTo != null) EventSystem.call(`CANCEL_TASK_${this.identifier}`, null, this.sendTo)
     this._cancel()
   }
 
@@ -112,13 +119,13 @@ export class BufferSharingTask<T> {
 
   private initializeSend() {
     this.uint8Array = MessagePack.encode(this.data)
-    let total = Math.ceil(this.uint8Array.byteLength / this.chankSize)
+    const total = Math.ceil(this.uint8Array.byteLength / this.chankSize)
     this.chanks = new Array(total)
 
-    console.log('チャンク分割 ' + this.identifier, this.chanks.length)
+    console.log(`チャンク分割 ${this.identifier}`, this.chanks.length)
 
     EventSystem.register(this)
-      .on<number>('FILE_MORE_CHANK_' + this.identifier, (event) => {
+      .on<number>(`FILE_MORE_CHANK_${this.identifier}`, (event) => {
         if (this.sendTo !== event.sendFrom) return
         this.completedChankIndex = event.data
         if (this.sendChankTimer == null) {
@@ -131,7 +138,7 @@ export class BufferSharingTask<T> {
         console.warn('送信キャンセル（Peer切断）', this, event.data.peer)
         this._cancel()
       })
-      .on('CANCEL_TASK_' + this.identifier, (event) => {
+      .on(`CANCEL_TASK_${this.identifier}`, (event) => {
         console.warn('送信キャンセル', this, event.sendFrom)
         this._cancel()
       })
@@ -140,12 +147,9 @@ export class BufferSharingTask<T> {
   }
 
   private sendChank(index: number) {
-    let chank = this.uint8Array.slice(
-      index * this.chankSize,
-      (index + 1) * this.chankSize,
-    )
-    let data = { index: index, length: this.chanks.length, chank: chank }
-    EventSystem.call('FILE_SEND_CHANK_' + this.identifier, data, this.sendTo)
+    const chank = this.uint8Array.slice(index * this.chankSize, (index + 1) * this.chankSize)
+    const data = { index, length: this.chanks.length, chank }
+    EventSystem.call(`FILE_SEND_CHANK_${this.identifier}`, data, this.sendTo)
     this.sentChankIndex = index
     this.sendChankTimer = null
     if (this.chanks.length <= index + 1) {
@@ -165,13 +169,11 @@ export class BufferSharingTask<T> {
     this.startTime = performance.now()
     this.chankReceiveCount = 0
     EventSystem.register(this)
-      .on<ChankData>('FILE_SEND_CHANK_' + this.identifier, (event) => {
+      .on<ChankData>(`FILE_SEND_CHANK_${this.identifier}`, (event) => {
         if (this.chanks.length < 1) this.chanks = new Array(event.data.length)
 
         if (this.chanks[event.data.index] != null) {
-          console.log(
-            `already received. [${event.data.index}] <${this.identifier}>`,
-          )
+          console.log(`already received. [${event.data.index}] <${this.identifier}>`)
           return
         }
         this.chankReceiveCount++
@@ -181,11 +183,7 @@ export class BufferSharingTask<T> {
           this.finishReceive()
         } else {
           this.resetTimeout()
-          EventSystem.call(
-            'FILE_MORE_CHANK_' + this.identifier,
-            event.data.index,
-            event.sendFrom,
-          )
+          EventSystem.call(`FILE_MORE_CHANK_${this.identifier}`, event.data.index, event.sendFrom)
         }
       })
       .on('DISCONNECT_PEER', (event) => {
@@ -193,7 +191,7 @@ export class BufferSharingTask<T> {
         console.warn('受信キャンセル（Peer切断）', this, event.data.peer)
         this._cancel()
       })
-      .on('CANCEL_TASK_' + this.identifier, (event) => {
+      .on(`CANCEL_TASK_${this.identifier}`, (event) => {
         console.warn('受信キャンセル', this, event.sendFrom)
         this._cancel()
       })
@@ -203,22 +201,22 @@ export class BufferSharingTask<T> {
     console.log('バッファ受信完了', this.identifier)
 
     let sumLength = 0
-    for (let chank of this.chanks) {
+    for (const chank of this.chanks) {
       sumLength += chank.byteLength
     }
 
-    let time = performance.now() - this.startTime
-    let rate = sumLength / 1024 / 1024 / (time / 1000)
+    const time = performance.now() - this.startTime
+    const rate = sumLength / 1024 / 1024 / (time / 1000)
     console.log(
-      `${(sumLength / 1024).toFixed(2)}KB ${(time / 1000).toFixed(
+      `${(sumLength / 1024).toFixed(2)}KB ${(time / 1000).toFixed(2)}秒 転送速度: ${rate.toFixed(
         2,
-      )}秒 転送速度: ${rate.toFixed(2)}MB/s`,
+      )}MB/s`,
     )
 
-    let uint8Array = new Uint8Array(sumLength)
+    const uint8Array = new Uint8Array(sumLength)
     let pos = 0
 
-    for (let chank of this.chanks) {
+    for (const chank of this.chanks) {
       uint8Array.set(chank, pos)
       pos += chank.byteLength
     }

@@ -1,17 +1,5 @@
-import {
-  animate,
-  keyframes,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations'
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnInit,
-} from '@angular/core'
+import { animate, keyframes, style, transition, trigger } from '@angular/animations'
+import { AfterViewInit, ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core'
 
 import { ChatMessage } from '@udonarium/chat-message'
 import { ImageFile } from '@udonarium/core/file-storage/image-file'
@@ -35,10 +23,7 @@ import { ChatMessageService } from 'service/chat-message.service'
       transition('void => *', [
         animate(
           '200ms ease-out',
-          keyframes([
-            style({ opacity: '0', offset: 0 }),
-            style({ opacity: '1', offset: 1.0 }),
-          ]),
+          keyframes([style({ opacity: '0', offset: 0 }), style({ opacity: '1', offset: 1.0 })]),
         ),
       ]),
     ]),
@@ -47,17 +32,18 @@ import { ChatMessageService } from 'service/chat-message.service'
 })
 export class ChatMessageComponent implements OnInit, AfterViewInit {
   @Input() chatMessage: ChatMessage
+
   imageFile: ImageFile = ImageFile.Empty
-  animeState: string = 'inactive'
+
+  animeState = 'inactive'
 
   constructor(private chatMessageService: ChatMessageService) {}
 
   ngOnInit() {
-    let file: ImageFile = this.chatMessage.image
+    const file: ImageFile = this.chatMessage.image
     if (file) this.imageFile = file
-    let time = this.chatMessageService.getTime()
-    if (time - 10 * 1000 < this.chatMessage.timestamp)
-      this.animeState = 'active'
+    const time = this.chatMessageService.getTime()
+    if (time - 10 * 1000 < this.chatMessage.timestamp) this.animeState = 'active'
   }
 
   ngAfterViewInit() {}

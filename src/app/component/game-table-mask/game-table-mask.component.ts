@@ -19,10 +19,7 @@ import { PresetSound, SoundEffect } from '@udonarium/sound-effect'
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component'
 import { InputHandler } from 'directive/input-handler'
 import { MovableOption } from 'directive/movable.directive'
-import {
-  ContextMenuSeparator,
-  ContextMenuService,
-} from 'service/context-menu.service'
+import { ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service'
 import { PanelOption, PanelService } from 'service/panel.service'
 import { PointerDeviceService } from 'service/pointer-device.service'
 import { TabletopService } from 'service/tabletop.service'
@@ -33,34 +30,40 @@ import { TabletopService } from 'service/tabletop.service'
   styleUrls: ['./game-table-mask.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GameTableMaskComponent
-  implements OnInit, OnDestroy, AfterViewInit {
+export class GameTableMaskComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() gameTableMask: GameTableMask = null
-  @Input() is3D: boolean = false
+
+  @Input() is3D = false
 
   get name(): string {
     return this.gameTableMask.name
   }
+
   get width(): number {
     return this.adjustMinBounds(this.gameTableMask.width)
   }
+
   get height(): number {
     return this.adjustMinBounds(this.gameTableMask.height)
   }
+
   get opacity(): number {
     return this.gameTableMask.opacity
   }
+
   get imageFile(): ImageFile {
     return this.gameTableMask.imageFile
   }
+
   get isLock(): boolean {
     return this.gameTableMask.isLock
   }
+
   set isLock(isLock: boolean) {
     this.gameTableMask.isLock = isLock
   }
 
-  gridSize: number = 50
+  gridSize = 50
 
   movableOption: MovableOption = {}
 
@@ -79,7 +82,7 @@ export class GameTableMaskComponent
   ngOnInit() {
     EventSystem.register(this)
       .on('UPDATE_GAME_OBJECT', -1000, (event) => {
-        let object = ObjectStore.instance.get(event.data.identifier)
+        const object = ObjectStore.instance.get(event.data.identifier)
         if (!this.gameTableMask || !object) return
         if (
           this.gameTableMask === object ||
@@ -134,8 +137,8 @@ export class GameTableMaskComponent
     e.preventDefault()
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu) return
-    let menuPosition = this.pointerDeviceService.pointers[0]
-    let objectPosition = this.tabletopService.calcTabletopLocalCoordinate()
+    const menuPosition = this.pointerDeviceService.pointers[0]
+    const objectPosition = this.tabletopService.calcTabletopLocalCoordinate()
     this.contextMenuService.open(
       menuPosition,
       [
@@ -164,13 +167,12 @@ export class GameTableMaskComponent
         {
           name: 'コピーを作る',
           action: () => {
-            let cloneObject = this.gameTableMask.clone()
+            const cloneObject = this.gameTableMask.clone()
             console.log('コピー', cloneObject)
             cloneObject.location.x += this.gridSize
             cloneObject.location.y += this.gridSize
             cloneObject.isLock = false
-            if (this.gameTableMask.parent)
-              this.gameTableMask.parent.appendChild(cloneObject)
+            if (this.gameTableMask.parent) this.gameTableMask.parent.appendChild(cloneObject)
             SoundEffect.play(PresetSound.cardPut)
           },
         },
@@ -185,9 +187,7 @@ export class GameTableMaskComponent
         {
           name: 'オブジェクト作成',
           action: null,
-          subActions: this.tabletopService.getContextMenuActionsForCreateObject(
-            objectPosition,
-          ),
+          subActions: this.tabletopService.getContextMenuActionsForCreateObject(objectPosition),
         },
       ],
       this.name,
@@ -207,17 +207,17 @@ export class GameTableMaskComponent
   }
 
   private showDetail(gameObject: GameTableMask) {
-    let coordinate = this.pointerDeviceService.pointers[0]
+    const coordinate = this.pointerDeviceService.pointers[0]
     let title = 'マップマスク設定'
-    if (gameObject.name.length) title += ' - ' + gameObject.name
-    let option: PanelOption = {
-      title: title,
+    if (gameObject.name.length) title += ` - ${gameObject.name}`
+    const option: PanelOption = {
+      title,
       left: coordinate.x - 200,
       top: coordinate.y - 150,
       width: 400,
       height: 300,
     }
-    let component = this.panelService.open<GameCharacterSheetComponent>(
+    const component = this.panelService.open<GameCharacterSheetComponent>(
       GameCharacterSheetComponent,
       option,
     )

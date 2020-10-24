@@ -1,49 +1,52 @@
-import { ChatTab } from './chat-tab';
-import { SyncObject } from './core/synchronize-object/decorator';
-import { ObjectNode } from './core/synchronize-object/object-node';
-import { InnerXml } from './core/synchronize-object/object-serializer';
+import { ChatTab } from './chat-tab'
+import { SyncObject } from './core/synchronize-object/decorator'
+import { ObjectNode } from './core/synchronize-object/object-node'
+import { InnerXml } from './core/synchronize-object/object-serializer'
 
 @SyncObject('chat-tab-list')
 export class ChatTabList extends ObjectNode implements InnerXml {
-  private static _instance: ChatTabList;
+  private static _instance: ChatTabList
+
   static get instance(): ChatTabList {
     if (!ChatTabList._instance) {
-      ChatTabList._instance = new ChatTabList('ChatTabList');
-      ChatTabList._instance.initialize();
+      ChatTabList._instance = new ChatTabList('ChatTabList')
+      ChatTabList._instance.initialize()
     }
-    return ChatTabList._instance;
+    return ChatTabList._instance
   }
 
-  get chatTabs(): ChatTab[] { return this.children as ChatTab[]; }
+  get chatTabs(): ChatTab[] {
+    return this.children as ChatTab[]
+  }
 
   addChatTab(chatTab: ChatTab)
   addChatTab(tabName: string, identifier?: string)
   addChatTab(...args: any[]) {
-    let chatTab: ChatTab = null;
+    let chatTab: ChatTab = null
     if (args[0] instanceof ChatTab) {
-      chatTab = args[0];
+      chatTab = args[0]
     } else {
-      let tabName: string = args[0];
-      let identifier: string = args[1];
-      chatTab = new ChatTab(identifier);
-      chatTab.name = tabName;
-      chatTab.initialize();
+      const tabName: string = args[0]
+      const identifier: string = args[1]
+      chatTab = new ChatTab(identifier)
+      chatTab.name = tabName
+      chatTab.initialize()
     }
-    this.appendChild(chatTab);
+    this.appendChild(chatTab)
   }
 
   parseInnerXml(element: Element) {
     // XMLからの新規作成を許可せず、既存のオブジェクトを更新する
-    for (let child of ChatTabList.instance.children) {
-      child.destroy();
+    for (const child of ChatTabList.instance.children) {
+      child.destroy()
     }
 
-    let context = ChatTabList.instance.toContext();
-    context.syncData = this.toContext().syncData;
-    ChatTabList.instance.apply(context);
-    ChatTabList.instance.update();
+    const context = ChatTabList.instance.toContext()
+    context.syncData = this.toContext().syncData
+    ChatTabList.instance.apply(context)
+    ChatTabList.instance.update()
 
-    super.parseInnerXml.apply(ChatTabList.instance, [element]);
-    this.destroy();
+    super.parseInnerXml.apply(ChatTabList.instance, [element])
+    this.destroy()
   }
 }

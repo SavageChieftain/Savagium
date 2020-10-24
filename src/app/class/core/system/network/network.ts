@@ -7,6 +7,7 @@ type QueueItem = { data: any; sendTo: string }
 
 export class Network {
   private static _instance: Network
+
   static get instance(): Network {
     if (!Network._instance) Network._instance = new Network()
     return Network._instance
@@ -15,6 +16,7 @@ export class Network {
   get peerId(): string {
     return this.connection ? this.connection.peerId : '???'
   }
+
   get peerIds(): string[] {
     return this.connection ? this.connection.peerIds.concat() : []
   }
@@ -22,6 +24,7 @@ export class Network {
   get peerContexts(): IPeerContext[] {
     return this.connection ? this.connection.peerContexts.concat() : []
   }
+
   get peerContext(): IPeerContext {
     return this.connection ? this.connection.peerContext : null
   }
@@ -33,18 +36,23 @@ export class Network {
   }
 
   readonly callback: ConnectionCallback = new ConnectionCallback()
+
   get bandwidthUsage(): number {
     return this.connection ? this.connection.bandwidthUsage : 0
   }
 
-  private key: string = ''
+  private key = ''
+
   private connection: Connection
 
   private queue: Set<QueueItem> = new Set()
+
   private sendInterval: number = null
+
   private sendCallback = () => {
     this.sendQueue()
   }
+
   private callbackUnload: any = (e) => {
     this.close()
   }
@@ -83,25 +91,25 @@ export class Network {
   disconnect(peerId: string) {
     if (!this.connection) return
     if (this.connection.disconnect(peerId)) {
-      console.log('<disconnectPeer()> Peer:' + peerId)
+      console.log(`<disconnectPeer()> Peer:${peerId}`)
       this.disconnect(peerId)
     }
   }
 
   send(data: any, sendTo?: string) {
-    this.queue.add({ data: data, sendTo: sendTo })
+    this.queue.add({ data, sendTo })
     if (this.sendInterval === null) {
       this.sendInterval = setZeroTimeout(this.sendCallback)
     }
   }
 
   private sendQueue() {
-    let broadcast: any[] = []
-    let unicast: { [sendTo: string]: any[] } = {}
-    let echocast: any[] = []
+    const broadcast: any[] = []
+    const unicast: { [sendTo: string]: any[] } = {}
+    const echocast: any[] = []
 
     let loopCount = this.queue.size < 128 ? this.queue.size : 128
-    for (let item of this.queue) {
+    for (const item of this.queue) {
       if (loopCount <= 0) break
       loopCount--
       this.queue.delete(item)
@@ -118,7 +126,7 @@ export class Network {
     // できるだけ一纏めにして送る
     if (this.connection) {
       if (broadcast.length) this.connection.send(broadcast)
-      for (let sendTo in unicast) this.connection.send(unicast[sendTo], sendTo)
+      for (const sendTo in unicast) this.connection.send(unicast[sendTo], sendTo)
     }
 
     // 自分自身への送信
@@ -127,7 +135,7 @@ export class Network {
       this.callback.onData(this.peerId, echocast)
     }
 
-    if (0 < this.queue.size) {
+    if (this.queue.size > 0) {
       this.sendInterval = setZeroTimeout(this.sendCallback)
     } else {
       this.sendInterval = null
@@ -140,13 +148,11 @@ export class Network {
   }
 
   listAllPeers(): Promise<string[]> {
-    return this.connection
-      ? this.connection.listAllPeers()
-      : Promise.resolve([])
+    return this.connection ? this.connection.listAllPeers() : Promise.resolve([])
   }
 
   private initializeConnection(): Connection {
-    let store = new SkyWayConnection()
+    const store = new SkyWayConnection()
     store.setApiKey(this.key)
 
     store.callback.onOpen = (peerId) => {
@@ -168,7 +174,7 @@ export class Network {
       if (this.callback.onError) this.callback.onError(peerId, err)
     }
 
-    if (0 < this.queue.size && this.sendInterval === null)
+    if (this.queue.size > 0 && this.sendInterval === null)
       this.sendInterval = setZeroTimeout(this.sendCallback)
 
     return store

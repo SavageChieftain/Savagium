@@ -1,8 +1,6 @@
 import { NgZone } from '@angular/core'
 
-type OnGestureCallback = (
-  srcEvent: TouchEvent | MouseEvent | PointerEvent,
-) => void
+type OnGestureCallback = (srcEvent: TouchEvent | MouseEvent | PointerEvent) => void
 type OnTransformCallback = (
   transformX: number,
   transformY: number,
@@ -23,26 +21,32 @@ export enum TableTouchGestureEvent {
 
 export class TableTouchGesture {
   private hammer: HammerManager = null
-  private deltaHammerDeltaX: number = 0
+
+  private deltaHammerDeltaX = 0
+
   private deltaHammerDeltaY = 1.0
+
   private deltaHammerScale = 1.0
+
   private deltaHammerRotation = 0
 
-  private prevHammerDeltaX: number = 0
-  private prevHammerDeltaY: number = 0
-  private prevHammerScale: number = 0
-  private prevHammerRotation: number = 0
+  private prevHammerDeltaX = 0
+
+  private prevHammerDeltaY = 0
+
+  private prevHammerScale = 0
+
+  private prevHammerRotation = 0
 
   private tappedPanTimer: NodeJS.Timer = null
+
   private tappedPanCenter: HammerPoint = { x: 0, y: 0 }
 
   ongesture: OnGestureCallback = null
+
   ontransform: OnTransformCallback = null
 
-  constructor(
-    readonly targetElement: Element,
-    private readonly ngZone: NgZone,
-  ) {
+  constructor(readonly targetElement: Element, private readonly ngZone: NgZone) {
     this.initializeHammer()
   }
 
@@ -56,11 +60,11 @@ export class TableTouchGesture {
       inputClass: Hammer.TouchInput,
     })
 
-    let tap = new Hammer.Tap()
-    let pan1p = new Hammer.Pan({ event: 'pan1p', pointers: 1, threshold: 0 })
-    let pan2p = new Hammer.Pan({ event: 'pan2p', pointers: 2, threshold: 0 })
-    let pinch = new Hammer.Pinch()
-    let rotate = new Hammer.Rotate()
+    const tap = new Hammer.Tap()
+    const pan1p = new Hammer.Pan({ event: 'pan1p', pointers: 1, threshold: 0 })
+    const pan2p = new Hammer.Pan({ event: 'pan2p', pointers: 2, threshold: 0 })
+    const pinch = new Hammer.Pinch()
+    const rotate = new Hammer.Rotate()
 
     pan1p.recognizeWith(pan2p)
     pan1p.recognizeWith(rotate)
@@ -83,15 +87,15 @@ export class TableTouchGesture {
     this.hammer.on('rotatemove', this.onRotateMove.bind(this))
 
     // iOS で contextmenu が発火しない問題へのworkaround.
-    let ua = window.navigator.userAgent.toLowerCase()
-    let isiOS =
+    const ua = window.navigator.userAgent.toLowerCase()
+    const isiOS =
       ua.indexOf('iphone') > -1 ||
       ua.indexOf('ipad') > -1 ||
       (ua.indexOf('macintosh') > -1 && 'ontouchend' in document)
     if (!isiOS) return
     this.hammer.add(new Hammer.Press({ time: 251 }))
     this.hammer.on('press', (ev) => {
-      let event = new MouseEvent('contextmenu', {
+      const event = new MouseEvent('contextmenu', {
         bubbles: true,
         cancelable: true,
         clientX: ev.center.x,
@@ -118,11 +122,9 @@ export class TableTouchGesture {
     this.prevHammerDeltaX = ev.deltaX
     this.prevHammerDeltaY = ev.deltaY
 
-    if (this.tappedPanTimer == null || ev.eventType != Hammer.INPUT_START)
-      return
-    let distance =
-      (this.tappedPanCenter.x - ev.center.x) ** 2 +
-      (this.tappedPanCenter.y - ev.center.y) ** 2
+    if (this.tappedPanTimer == null || ev.eventType != Hammer.INPUT_START) return
+    const distance =
+      (this.tappedPanCenter.x - ev.center.x) ** 2 + (this.tappedPanCenter.y - ev.center.y) ** 2
     if (50 ** 2 < distance) {
       this.clearTappedPanTimer()
     }
@@ -148,9 +150,9 @@ export class TableTouchGesture {
 
   private onTappedPanMove(ev: HammerInput) {
     if (this.tappedPanTimer == null) {
-      let transformX = this.deltaHammerDeltaX
-      let transformY = this.deltaHammerDeltaY
-      let transformZ = 0
+      const transformX = this.deltaHammerDeltaX
+      const transformY = this.deltaHammerDeltaY
+      const transformZ = 0
       if (this.ontransform)
         this.ontransform(
           transformX,
@@ -164,72 +166,36 @@ export class TableTouchGesture {
         )
     } else {
       this.clearTappedPanTimer(false)
-      let scale = this.deltaHammerDeltaY
-      let transformZ = scale * 7.5
+      const scale = this.deltaHammerDeltaY
+      const transformZ = scale * 7.5
       if (this.ongesture) this.ongesture(ev.srcEvent)
       if (this.ontransform)
-        this.ontransform(
-          0,
-          0,
-          transformZ,
-          0,
-          0,
-          0,
-          TableTouchGestureEvent.TAP_PINCH,
-          ev.srcEvent,
-        )
+        this.ontransform(0, 0, transformZ, 0, 0, 0, TableTouchGestureEvent.TAP_PINCH, ev.srcEvent)
     }
   }
 
   private onPanMove(ev: HammerInput) {
     this.clearTappedPanTimer()
-    let rotateX = (-this.deltaHammerDeltaY / window.innerHeight) * 100
+    const rotateX = (-this.deltaHammerDeltaY / window.innerHeight) * 100
     if (this.ongesture) this.ongesture(ev.srcEvent)
     if (this.ontransform)
-      this.ontransform(
-        0,
-        0,
-        0,
-        rotateX,
-        0,
-        0,
-        TableTouchGestureEvent.ROTATE,
-        ev.srcEvent,
-      )
+      this.ontransform(0, 0, 0, rotateX, 0, 0, TableTouchGestureEvent.ROTATE, ev.srcEvent)
   }
 
   private onPinchMove(ev: HammerInput) {
     this.clearTappedPanTimer()
-    let transformZ = this.deltaHammerScale * 500
+    const transformZ = this.deltaHammerScale * 500
     if (this.ongesture) this.ongesture(ev.srcEvent)
     if (this.ontransform)
-      this.ontransform(
-        0,
-        0,
-        transformZ,
-        0,
-        0,
-        0,
-        TableTouchGestureEvent.PINCH,
-        ev.srcEvent,
-      )
+      this.ontransform(0, 0, transformZ, 0, 0, 0, TableTouchGestureEvent.PINCH, ev.srcEvent)
   }
 
   private onRotateMove(ev: HammerInput) {
     this.clearTappedPanTimer()
-    let rotateZ = this.deltaHammerRotation
+    const rotateZ = this.deltaHammerRotation
     if (this.ongesture) this.ongesture(ev.srcEvent)
     if (this.ontransform)
-      this.ontransform(
-        0,
-        0,
-        0,
-        0,
-        0,
-        rotateZ,
-        TableTouchGestureEvent.ROTATE,
-        ev.srcEvent,
-      )
+      this.ontransform(0, 0, 0, 0, 0, rotateZ, TableTouchGestureEvent.ROTATE, ev.srcEvent)
   }
 
   private clearTappedPanTimer(needsSetNull: boolean = true) {

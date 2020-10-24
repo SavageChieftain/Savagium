@@ -9,17 +9,19 @@ export type CatalogItem = {
 
 export class AudioStorage {
   private static _instance: AudioStorage
+
   static get instance(): AudioStorage {
     if (!AudioStorage._instance) AudioStorage._instance = new AudioStorage()
     return AudioStorage._instance
   }
 
   private lazyTimer: ResettableTimeout
+
   private hash: { [identifier: string]: AudioFile } = {}
 
   get audios(): AudioFile[] {
-    let audios: AudioFile[] = []
-    for (let identifier in this.hash) {
+    const audios: AudioFile[] = []
+    for (const identifier in this.hash) {
       audios.push(this.hash[identifier])
     }
     return audios
@@ -30,7 +32,7 @@ export class AudioStorage {
   }
 
   private destroy() {
-    for (let identifier in this.hash) {
+    for (const identifier in this.hash) {
       this.delete(identifier)
     }
   }
@@ -38,7 +40,7 @@ export class AudioStorage {
   async addAsync(file: File): Promise<AudioFile>
   async addAsync(blob: Blob): Promise<AudioFile>
   async addAsync(arg: any): Promise<AudioFile> {
-    let audio: AudioFile = await AudioFile.createAsync(arg)
+    const audio: AudioFile = await AudioFile.createAsync(arg)
 
     return this._add(audio)
   }
@@ -63,7 +65,7 @@ export class AudioStorage {
     if (AudioState.COMPLETE <= audio.state) this.lazySynchronize(100)
     if (this.update(audio)) return this.hash[audio.identifier]
     this.hash[audio.identifier] = audio
-    console.log('add Audio: ' + audio.identifier)
+    console.log(`add Audio: ${audio.identifier}`)
     return audio
   }
 
@@ -76,7 +78,7 @@ export class AudioStorage {
     } else {
       context = audio
     }
-    let updateAudio: AudioFile = this.hash[audio.identifier]
+    const updateAudio: AudioFile = this.hash[audio.identifier]
     if (updateAudio) {
       updateAudio.apply(audio)
       return true
@@ -85,7 +87,7 @@ export class AudioStorage {
   }
 
   delete(identifier: string): boolean {
-    let audio: AudioFile = this.hash[identifier]
+    const audio: AudioFile = this.hash[identifier]
     if (audio) {
       audio.destroy()
       delete this.hash[identifier]
@@ -95,7 +97,7 @@ export class AudioStorage {
   }
 
   get(identifier: string): AudioFile {
-    let audio: AudioFile = this.hash[identifier]
+    const audio: AudioFile = this.hash[identifier]
     if (audio) return audio
     return null
   }
@@ -112,8 +114,8 @@ export class AudioStorage {
   }
 
   getCatalog(): CatalogItem[] {
-    let catalog: CatalogItem[] = []
-    for (let audio of AudioStorage.instance.audios) {
+    const catalog: CatalogItem[] = []
+    for (const audio of AudioStorage.instance.audios) {
       if (AudioState.COMPLETE <= audio.state) {
         catalog.push({ identifier: audio.identifier, state: audio.state })
       }

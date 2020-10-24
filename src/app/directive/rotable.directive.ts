@@ -10,10 +10,7 @@ import {
 } from '@angular/core'
 import { EventSystem } from '@udonarium/core/system'
 import { TabletopObject } from '@udonarium/tabletop-object'
-import {
-  PointerCoordinate,
-  PointerDeviceService,
-} from 'service/pointer-device.service'
+import { PointerCoordinate, PointerDeviceService } from 'service/pointer-device.service'
 import { TabletopService } from 'service/tabletop.service'
 
 import { InputHandler } from './input-handler'
@@ -34,59 +31,53 @@ export interface RotableOption {
 export class RotableDirective implements AfterViewInit, OnDestroy {
   protected tabletopObject: RotableTabletopObject
 
-  private transformCssOffset: string = ''
-  private grabbingSelecter: string = '.rotate-grab'
+  private transformCssOffset = ''
+
+  private grabbingSelecter = '.rotate-grab'
+
   @Input('rotable.option') set option(option: RotableOption) {
     this.tabletopObject =
-      option.tabletopObject != null
-        ? option.tabletopObject
-        : this.tabletopObject
+      option.tabletopObject != null ? option.tabletopObject : this.tabletopObject
     this.grabbingSelecter =
-      option.grabbingSelecter != null
-        ? option.grabbingSelecter
-        : this.grabbingSelecter
+      option.grabbingSelecter != null ? option.grabbingSelecter : this.grabbingSelecter
     this.transformCssOffset =
-      option.transformCssOffset != null
-        ? option.transformCssOffset
-        : this.transformCssOffset
+      option.transformCssOffset != null ? option.transformCssOffset : this.transformCssOffset
   }
-  @Input('rotable.disable') isDisable: boolean = false
-  @Output('rotable.onstart') onstart: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('rotable.ondragstart') ondragstart: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('rotable.ondrag') ondrag: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('rotable.ondragend') ondragend: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
-  @Output('rotable.onend') onend: EventEmitter<
-    PointerEvent
-  > = new EventEmitter()
 
-  private _rotate: number = 0
+  @Input('rotable.disable') isDisable = false
+
+  @Output('rotable.onstart') onstart: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('rotable.ondragstart') ondragstart: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('rotable.ondrag') ondrag: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('rotable.ondragend') ondragend: EventEmitter<PointerEvent> = new EventEmitter()
+
+  @Output('rotable.onend') onend: EventEmitter<PointerEvent> = new EventEmitter()
+
+  private _rotate = 0
+
   get rotate(): number {
     return this._rotate
   }
+
   set rotate(rotate: number) {
     this._rotate = rotate
     this.setUpdateTimer()
   }
+
   @Input('rotable.value') set value(value: number) {
     this._rotate = value
     this.updateTransformCss()
   }
-  @Output('rotable.valueChange') valueChange: EventEmitter<
-    number
-  > = new EventEmitter()
+
+  @Output('rotable.valueChange') valueChange: EventEmitter<number> = new EventEmitter()
 
   private get isAllowedToRotate(): boolean {
     if (!this.grabbingElement || !this.input.target) return false
     if (this.grabbingSelecter.length < 1) return true
-    let elements = this.input.target.querySelectorAll(this.grabbingSelecter)
+    const elements = this.input.target.querySelectorAll(this.grabbingSelecter)
     let macth = false
     for (let i = 0; i < elements.length; i++) {
       macth = elements[i].contains(this.grabbingElement)
@@ -95,9 +86,12 @@ export class RotableDirective implements AfterViewInit, OnDestroy {
     return false
   }
 
-  private rotateOffset: number = 0
+  private rotateOffset = 0
+
   private updateTimer: NodeJS.Timer = null
+
   private grabbingElement: HTMLElement = null
+
   private input: InputHandler = null
 
   constructor(
@@ -164,7 +158,7 @@ export class RotableDirective implements AfterViewInit, OnDestroy {
     e.stopPropagation()
     this.onstart.emit(e as PointerEvent)
 
-    let pointer = PointerDeviceService.convertLocalToLocal(
+    const pointer = PointerDeviceService.convertLocalToLocal(
       this.input.pointer,
       this.grabbingElement,
       this.input.target.parentElement,
@@ -174,22 +168,19 @@ export class RotableDirective implements AfterViewInit, OnDestroy {
   }
 
   onInputMove(e: MouseEvent | TouchEvent) {
-    if (
-      this.input.isGrabbing &&
-      !this.tabletopService.pointerDeviceService.isDragging
-    ) {
+    if (this.input.isGrabbing && !this.tabletopService.pointerDeviceService.isDragging) {
       return this.cancel() // todo
     }
     if (this.isDisable || !this.input.isGrabbing) return this.cancel()
 
     if (e.cancelable) e.preventDefault()
     e.stopPropagation()
-    let pointer3d = PointerDeviceService.convertLocalToLocal(
+    const pointer3d = PointerDeviceService.convertLocalToLocal(
       this.input.pointer,
       this.grabbingElement,
       this.input.target.parentElement,
     )
-    let angle = this.calcRotate(pointer3d, this.rotateOffset)
+    const angle = this.calcRotate(pointer3d, this.rotateOffset)
 
     if (!this.input.isDragging) this.ondragstart.emit(e as PointerEvent)
     this.ondrag.emit(e as PointerEvent)
@@ -213,20 +204,17 @@ export class RotableDirective implements AfterViewInit, OnDestroy {
   }
 
   private calcRotate(pointer: PointerCoordinate, rotateOffset: number): number {
-    let centerX = this.input.target.clientWidth / 2
-    let centerY = this.input.target.clientHeight / 2
-    let x = pointer.x - centerX
-    let y = pointer.y - centerY
-    let rad = Math.atan2(y, x)
+    const centerX = this.input.target.clientWidth / 2
+    const centerY = this.input.target.clientHeight / 2
+    const x = pointer.x - centerX
+    const y = pointer.y - centerY
+    const rad = Math.atan2(y, x)
     return ((rad * 180) / Math.PI - rotateOffset) % 360
   }
 
   snapToPolygonal(polygonal: number = 24) {
     if (polygonal <= 1) return
-    this.rotate =
-      this.rotate < 0
-        ? this.rotate - 180 / polygonal
-        : this.rotate + 180 / polygonal
+    this.rotate = this.rotate < 0 ? this.rotate - 180 / polygonal : this.rotate + 180 / polygonal
     this.rotate -= this.rotate % (360 / polygonal)
   }
 
@@ -248,9 +236,7 @@ export class RotableDirective implements AfterViewInit, OnDestroy {
 
   private setAnimatedTransition(isEnable: boolean) {
     if (!this.input) return
-    this.input.target.style.transition = isEnable
-      ? 'transform 132ms linear'
-      : ''
+    this.input.target.style.transition = isEnable ? 'transform 132ms linear' : ''
   }
 
   private shouldTransition(object: RotableTabletopObject): boolean {
@@ -258,14 +244,12 @@ export class RotableDirective implements AfterViewInit, OnDestroy {
   }
 
   private stopTransition() {
-    this.input.target.style.transform = window.getComputedStyle(
-      this.input.target,
-    ).transform
+    this.input.target.style.transform = window.getComputedStyle(this.input.target).transform
   }
 
   private updateTransformCss() {
     if (!this.input) return
-    let css = this.transformCssOffset + ' rotateZ(' + this.rotate + 'deg)'
+    const css = `${this.transformCssOffset} rotateZ(${this.rotate}deg)`
     this.input.target.style.transform = css
   }
 }

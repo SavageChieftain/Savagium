@@ -35,46 +35,57 @@ import { from } from 'rxjs'
 export class ChatInputComponent implements OnInit, OnDestroy {
   @ViewChild('textArea', { static: true }) textAreaElementRef: ElementRef
 
-  @Input() onlyCharacters: boolean = false
-  @Input() chatTabidentifier: string = ''
+  @Input() onlyCharacters = false
 
-  @Input('gameType') _gameType: string = ''
+  @Input() chatTabidentifier = ''
+
+  @Input('gameType') _gameType = ''
+
   @Output() gameTypeChange = new EventEmitter<string>()
+
   get gameType(): string {
     return this._gameType
   }
+
   set gameType(gameType: string) {
     this._gameType = gameType
     this.gameTypeChange.emit(gameType)
   }
 
-  @Input('sendFrom') _sendFrom: string = this.myPeer
-    ? this.myPeer.identifier
-    : ''
+  @Input('sendFrom') _sendFrom: string = this.myPeer ? this.myPeer.identifier : ''
+
   @Output() sendFromChange = new EventEmitter<string>()
+
   get sendFrom(): string {
     return this._sendFrom
   }
+
   set sendFrom(sendFrom: string) {
     this._sendFrom = sendFrom
     this.sendFromChange.emit(sendFrom)
   }
 
-  @Input('sendTo') _sendTo: string = ''
+  @Input('sendTo') _sendTo = ''
+
   @Output() sendToChange = new EventEmitter<string>()
+
   get sendTo(): string {
     return this._sendTo
   }
+
   set sendTo(sendTo: string) {
     this._sendTo = sendTo
     this.sendToChange.emit(sendTo)
   }
 
-  @Input('text') _text: string = ''
+  @Input('text') _text = ''
+
   @Output() textChange = new EventEmitter<string>()
+
   get text(): string {
     return this._text
   }
+
   set text(text: string) {
     this._text = text
     this.textChange.emit(text)
@@ -88,23 +99,26 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   }>()
 
   get isDirect(): boolean {
-    return this.sendTo != null && this.sendTo.length ? true : false
+    return !!(this.sendTo != null && this.sendTo.length)
   }
-  gameHelp: string = ''
+
+  gameHelp = ''
 
   get imageFile(): ImageFile {
-    let object = ObjectStore.instance.get(this.sendFrom)
+    const object = ObjectStore.instance.get(this.sendFrom)
     let image: ImageFile = null
     if (object instanceof GameCharacter) {
       image = object.imageFile
     } else if (object instanceof PeerCursor) {
       image = object.image
     }
-    return image ? image : ImageFile.Empty
+    return image || ImageFile.Empty
   }
 
-  private shouldUpdateCharacterList: boolean = true
+  private shouldUpdateCharacterList = true
+
   private _gameCharacters: GameCharacter[] = []
+
   get gameCharacters(): GameCharacter[] {
     if (this.shouldUpdateCharacterList) {
       this.shouldUpdateCharacterList = false
@@ -116,22 +130,28 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   }
 
   private writingEventInterval: NodeJS.Timer = null
-  private previousWritingLength: number = 0
+
+  private previousWritingLength = 0
+
   writingPeers: Map<string, NodeJS.Timer> = new Map()
+
   writingPeerNames: string[] = []
 
   get diceBotInfos() {
     return DiceBot.diceBotInfos
   }
+
   get myPeer(): PeerCursor {
     return PeerCursor.myCursor
   }
+
   get otherPeers(): PeerCursor[] {
     return ObjectStore.instance.getObjects(PeerCursor)
   }
 
-  public pickerState: boolean = false
-  private emojiRegex: RegExp = /(:[^\s:]+(?:::skin-tone-[2-6])?:)/g
+  public pickerState = false
+
+  private emojiRegex = /(:[^\s:]+(?:::skin-tone-[2-6])?:)/g
 
   constructor(
     private ngZone: NgZone,
@@ -145,10 +165,8 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     EventSystem.register(this)
       .on('MESSAGE_ADDED', (event) => {
         if (event.data.tabIdentifier !== this.chatTabidentifier) return
-        let message = ObjectStore.instance.get<ChatMessage>(
-          event.data.messageIdentifier,
-        )
-        let sendFrom = message ? message.from : '?'
+        const message = ObjectStore.instance.get<ChatMessage>(event.data.messageIdentifier)
+        const sendFrom = message ? message.from : '?'
         if (this.writingPeers.has(sendFrom)) {
           clearTimeout(this.writingPeers.get(sendFrom))
           this.writingPeers.delete(sendFrom)
@@ -159,11 +177,9 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         if (event.data.aliasName !== GameCharacter.aliasName) return
         this.shouldUpdateCharacterList = true
         if (event.data.identifier !== this.sendFrom) return
-        let gameCharacter = ObjectStore.instance.get<GameCharacter>(
-          event.data.identifier,
-        )
+        const gameCharacter = ObjectStore.instance.get<GameCharacter>(event.data.identifier)
         if (gameCharacter && !this.allowsChat(gameCharacter)) {
-          if (0 < this.gameCharacters.length && this.onlyCharacters) {
+          if (this.gameCharacters.length > 0 && this.onlyCharacters) {
             this.sendFrom = this.gameCharacters[0].identifier
           } else {
             this.sendFrom = this.myPeer.identifier
@@ -171,14 +187,13 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         }
       })
       .on('DISCONNECT_PEER', (event) => {
-        let object = ObjectStore.instance.get(this.sendTo)
+        const object = ObjectStore.instance.get(this.sendTo)
         if (object instanceof PeerCursor && object.peerId === event.data.peer) {
           this.sendTo = ''
         }
       })
       .on<string>('WRITING_A_MESSAGE', (event) => {
-        if (event.isSendFromSelf || event.data !== this.chatTabidentifier)
-          return
+        if (event.isSendFromSelf || event.data !== this.chatTabidentifier) return
         this.ngZone.run(() => {
           if (this.writingPeers.has(event.sendFrom))
             clearTimeout(this.writingPeers.get(event.sendFrom))
@@ -199,21 +214,18 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   }
 
   private updateWritingPeerNames() {
-    this.writingPeerNames = Array.from(this.writingPeers.keys()).map(
-      (peerId) => {
-        let peer = PeerCursor.find(peerId)
-        return peer ? peer.name : ''
-      },
-    )
+    this.writingPeerNames = Array.from(this.writingPeers.keys()).map((peerId) => {
+      const peer = PeerCursor.find(peerId)
+      return peer ? peer.name : ''
+    })
   }
+
   addEmoji($event: { $event: MouseEvent; emoji: EmojiData }) {
     this.text = `${this.text}${$event.emoji.native}`
   }
+
   onInput() {
-    if (
-      this.writingEventInterval === null &&
-      this.previousWritingLength <= this.text.length
-    ) {
+    if (this.writingEventInterval === null && this.previousWritingLength <= this.text.length) {
       const replaced = this.text.replace(this.emojiRegex, (match) => {
         const value = match.replace(/:/g, '')
         const list = this.emojiSearch.search(value).map((o) => {
@@ -227,9 +239,9 @@ export class ChatInputComponent implements OnInit, OnDestroy {
 
       let sendTo: string = null
       if (this.isDirect) {
-        let object = ObjectStore.instance.get(this.sendTo)
+        const object = ObjectStore.instance.get(this.sendTo)
         if (object instanceof PeerCursor) {
-          let peer = PeerContext.create(object.peerId)
+          const peer = PeerContext.create(object.peerId)
           if (peer) sendTo = peer.id
         }
       }
@@ -258,23 +270,23 @@ export class ChatInputComponent implements OnInit, OnDestroy {
 
     this.text = ''
     this.previousWritingLength = this.text.length
-    let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement
+    const textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement
     textArea.value = ''
     this.calcFitHeight()
   }
 
   calcFitHeight() {
-    let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement
+    const textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement
     textArea.style.height = ''
     if (textArea.scrollHeight >= textArea.offsetHeight) {
-      textArea.style.height = textArea.scrollHeight + 'px'
+      textArea.style.height = `${textArea.scrollHeight}px`
     }
   }
 
   loadDiceBot(gameType: string) {
     console.log('onChangeGameType ready')
     DiceBot.getHelpMessage(gameType).then((help) => {
-      console.log('onChangeGameType done\n' + help)
+      console.log(`onChangeGameType done\n${help}`)
     })
   }
 
@@ -282,24 +294,24 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     DiceBot.getHelpMessage(this.gameType).then((help) => {
       this.gameHelp = help
 
-      let gameName: string = 'ダイスボット'
-      for (let diceBotInfo of DiceBot.diceBotInfos) {
+      let gameName = 'ダイスボット'
+      for (const diceBotInfo of DiceBot.diceBotInfos) {
         if (diceBotInfo.gameType === this.gameType) {
-          gameName = 'ダイスボット<' + diceBotInfo.gameName + '＞'
+          gameName = `ダイスボット<${diceBotInfo.gameName}＞`
         }
       }
       gameName += 'の説明'
 
-      let coordinate = this.pointerDeviceService.pointers[0]
-      let option: PanelOption = {
+      const coordinate = this.pointerDeviceService.pointers[0]
+      const option: PanelOption = {
         left: coordinate.x,
         top: coordinate.y,
         width: 600,
         height: 500,
       }
-      let textView = this.panelService.open(TextViewComponent, option)
+      const textView = this.panelService.open(TextViewComponent, option)
       textView.title = gameName
-      textView.text =
+      textView.text = `${
         '【ダイスボット】チャットにダイス用の文字を入力するとダイスロールが可能\n' +
         '入力例）２ｄ６＋１　攻撃！\n' +
         '出力例）2d6+1　攻撃！\n' +
@@ -319,8 +331,8 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         '　4D6KH3 ： 大きな出目から3個取った後の和。大きな出目を取る KH、小さな出目を取る KL。\n' +
         '　2D20DL1+1 ： 小さな出目から1個除いた後の和+1。大きな出目を除く DH、小さな出目を除く DL。\n' +
         '　D66 ： D66ダイス。順序はゲームに依存。D66N：そのまま、D66S：昇順。\n' +
-        '===================================\n' +
-        this.gameHelp
+        '===================================\n'
+      }${this.gameHelp}`
     })
   }
 

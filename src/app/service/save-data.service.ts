@@ -23,10 +23,7 @@ export class SaveDataService {
 
   constructor(private ngZone: NgZone) {}
 
-  saveRoomAsync(
-    fileName: string = 'ルームデータ',
-    updateCallback?: UpdateCallback,
-  ): Promise<void> {
+  saveRoomAsync(fileName: string = 'ルームデータ', updateCallback?: UpdateCallback): Promise<void> {
     return SaveDataService.queue.add((resolve, reject) =>
       resolve(this._saveRoomAsync(fileName, updateCallback)),
     )
@@ -37,14 +34,12 @@ export class SaveDataService {
     updateCallback?: UpdateCallback,
   ): Promise<void> {
     let files: File[] = []
-    let roomXml = this.convertToXml(new Room())
-    let chatXml = this.convertToXml(ChatTabList.instance)
-    let summarySetting = this.convertToXml(DataSummarySetting.instance)
+    const roomXml = this.convertToXml(new Room())
+    const chatXml = this.convertToXml(ChatTabList.instance)
+    const summarySetting = this.convertToXml(DataSummarySetting.instance)
     files.push(new File([roomXml], 'data.xml', { type: 'text/plain' }))
     files.push(new File([chatXml], 'chat.xml', { type: 'text/plain' }))
-    files.push(
-      new File([summarySetting], 'summary.xml', { type: 'text/plain' }),
-    )
+    files.push(new File([summarySetting], 'summary.xml', { type: 'text/plain' }))
 
     files = files.concat(this.searchImageFiles(roomXml))
     files = files.concat(this.searchImageFiles(chatXml))
@@ -68,7 +63,7 @@ export class SaveDataService {
     updateCallback?: UpdateCallback,
   ): Promise<void> {
     let files: File[] = []
-    let xml: string = this.convertToXml(gameObject)
+    const xml: string = this.convertToXml(gameObject)
 
     files.push(new File([xml], 'data.xml', { type: 'text/plain' }))
     files = files.concat(this.searchImageFiles(xml))
@@ -83,7 +78,7 @@ export class SaveDataService {
   ): Promise<void> {
     let progresPercent = -1
     return FileArchiver.instance.saveAsync(files, zipName, (meta) => {
-      let percent = meta.percent | 0
+      const percent = meta.percent | 0
       if (percent <= progresPercent) return
       progresPercent = percent
       this.ngZone.run(() => updateCallback(progresPercent))
@@ -91,22 +86,20 @@ export class SaveDataService {
   }
 
   private convertToXml(gameObject: GameObject): string {
-    let xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>'
-    return xmlDeclaration + '\n' + Beautify.xml(gameObject.toXml(), 2)
+    const xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>'
+    return `${xmlDeclaration}\n${Beautify.xml(gameObject.toXml(), 2)}`
   }
 
   private searchImageFiles(xml: string): File[] {
-    let xmlElement: Element = XmlUtil.xml2element(xml)
-    let files: File[] = []
+    const xmlElement: Element = XmlUtil.xml2element(xml)
+    const files: File[] = []
     if (!xmlElement) return files
 
-    let images: { [identifier: string]: ImageFile } = {}
-    let imageElements = xmlElement.ownerDocument.querySelectorAll(
-      '*[type="image"]',
-    )
+    const images: { [identifier: string]: ImageFile } = {}
+    let imageElements = xmlElement.ownerDocument.querySelectorAll('*[type="image"]')
 
     for (let i = 0; i < imageElements.length; i++) {
-      let identifier = imageElements[i].innerHTML
+      const identifier = imageElements[i].innerHTML
       images[identifier] = ImageStorage.instance.get(identifier)
     }
 
@@ -115,26 +108,20 @@ export class SaveDataService {
     )
 
     for (let i = 0; i < imageElements.length; i++) {
-      let identifier = imageElements[i].getAttribute('imageIdentifier')
+      const identifier = imageElements[i].getAttribute('imageIdentifier')
       if (identifier) images[identifier] = ImageStorage.instance.get(identifier)
 
-      let backgroundImageIdentifier = imageElements[i].getAttribute(
-        'backgroundImageIdentifier',
-      )
+      const backgroundImageIdentifier = imageElements[i].getAttribute('backgroundImageIdentifier')
       if (backgroundImageIdentifier)
-        images[backgroundImageIdentifier] = ImageStorage.instance.get(
-          backgroundImageIdentifier,
-        )
+        images[backgroundImageIdentifier] = ImageStorage.instance.get(backgroundImageIdentifier)
     }
-    for (let identifier in images) {
-      let image = images[identifier]
+    for (const identifier in images) {
+      const image = images[identifier]
       if (image && image.state === ImageState.COMPLETE) {
         files.push(
-          new File(
-            [image.blob],
-            image.identifier + '.' + MimeType.extension(image.blob.type),
-            { type: image.blob.type },
-          ),
+          new File([image.blob], `${image.identifier}.${MimeType.extension(image.blob.type)}`, {
+            type: image.blob.type,
+          }),
         )
       }
     }
@@ -142,13 +129,13 @@ export class SaveDataService {
   }
 
   private appendTimestamp(fileName: string): string {
-    let date = new Date()
-    let year = date.getFullYear()
-    let month = ('00' + (date.getMonth() + 1)).slice(-2)
-    let day = ('00' + date.getDate()).slice(-2)
-    let hours = ('00' + date.getHours()).slice(-2)
-    let minutes = ('00' + date.getMinutes()).slice(-2)
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = `00${date.getMonth() + 1}`.slice(-2)
+    const day = `00${date.getDate()}`.slice(-2)
+    const hours = `00${date.getHours()}`.slice(-2)
+    const minutes = `00${date.getMinutes()}`.slice(-2)
 
-    return fileName + `_${year}-${month}-${day}_${hours}${minutes}`
+    return `${fileName}_${year}-${month}-${day}_${hours}${minutes}`
   }
 }

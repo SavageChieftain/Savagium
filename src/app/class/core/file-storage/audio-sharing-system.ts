@@ -6,22 +6,19 @@ import { FileReaderUtil } from './file-reader-util'
 
 export class AudioSharingSystem {
   private static _instance: AudioSharingSystem
+
   static get instance(): AudioSharingSystem {
-    if (!AudioSharingSystem._instance)
-      AudioSharingSystem._instance = new AudioSharingSystem()
+    if (!AudioSharingSystem._instance) AudioSharingSystem._instance = new AudioSharingSystem()
     return AudioSharingSystem._instance
   }
 
-  private sendTaskMap: Map<
-    string,
-    BufferSharingTask<AudioFileContext>
-  > = new Map()
-  private receiveTaskMap: Map<
-    string,
-    BufferSharingTask<AudioFileContext>
-  > = new Map()
-  private maxSendTask: number = 2
-  private maxReceiveTask: number = 4
+  private sendTaskMap: Map<string, BufferSharingTask<AudioFileContext>> = new Map()
+
+  private receiveTaskMap: Map<string, BufferSharingTask<AudioFileContext>> = new Map()
+
+  private maxSendTask = 2
+
+  private maxReceiveTask = 4
 
   private constructor() {}
 
@@ -36,25 +33,22 @@ export class AudioSharingSystem {
       })
       .on('SYNCHRONIZE_AUDIO_LIST', (event) => {
         if (event.isSendFromSelf) return
-        console.log('SYNCHRONIZE_AUDIO_LIST ' + event.sendFrom)
+        console.log(`SYNCHRONIZE_AUDIO_LIST ${event.sendFrom}`)
 
-        let otherCatalog: CatalogItem[] = event.data
-        let request: CatalogItem[] = []
+        const otherCatalog: CatalogItem[] = event.data
+        const request: CatalogItem[] = []
 
         console.log(
           'SYNCHRONIZE_AUDIO_LIST active tasks ',
           this.sendTaskMap.size + this.receiveTaskMap.size,
         )
-        for (let item of otherCatalog) {
+        for (const item of otherCatalog) {
           let audio: AudioFile = AudioStorage.instance.get(item.identifier)
           if (audio === null) {
             audio = AudioFile.createEmpty(item.identifier)
             AudioStorage.instance.add(audio)
           }
-          if (
-            audio.state < AudioState.COMPLETE &&
-            !this.receiveTaskMap.has(item.identifier)
-          ) {
+          if (audio.state < AudioState.COMPLETE && !this.receiveTaskMap.has(item.identifier)) {
             request.push({ identifier: item.identifier, state: audio.state })
           }
         }
@@ -71,17 +65,17 @@ export class AudioSharingSystem {
         if (request.length < 1 || this.isLimitReceiveTask()) {
           return
         }
-        let index = Math.floor(Math.random() * request.length)
+        const index = Math.floor(Math.random() * request.length)
         this.request([request[index]], event.sendFrom)
       })
       .on('REQUEST_AUDIO_RESOURE', (event) => {
         if (event.isSendFromSelf) return
 
-        let request: CatalogItem[] = event.data.identifiers
-        let randomRequest: CatalogItem[] = []
+        const request: CatalogItem[] = event.data.identifiers
+        const randomRequest: CatalogItem[] = []
 
-        for (let item of request) {
-          let audio: AudioFile = AudioStorage.instance.get(item.identifier)
+        for (const item of request) {
+          const audio: AudioFile = AudioStorage.instance.get(item.identifier)
           if (audio && item.state < audio.state)
             randomRequest.push({
               identifier: item.identifier,
@@ -91,65 +85,49 @@ export class AudioSharingSystem {
 
         if (
           this.isLimitSendTask() === false &&
-          0 < randomRequest.length &&
+          randomRequest.length > 0 &&
           !this.existsSendTask(event.data.receiver)
         ) {
           // 送信
-          console.log(
-            'REQUEST_AUDIO_RESOURE Send!!! ' +
-              event.data.receiver +
-              ' -> ' +
-              randomRequest,
-          )
-          let index = Math.floor(Math.random() * randomRequest.length)
-          let item: { identifier: string; state: number } = randomRequest[index]
-          let audio: AudioFile = AudioStorage.instance.get(item.identifier)
+          console.log(`REQUEST_AUDIO_RESOURE Send!!! ${event.data.receiver} -> ${randomRequest}`)
+          const index = Math.floor(Math.random() * randomRequest.length)
+          const item: { identifier: string; state: number } = randomRequest[index]
+          const audio: AudioFile = AudioStorage.instance.get(item.identifier)
           this.startSendTask(audio, event.data.receiver)
         } else {
           // 中継
-          let candidatePeers: string[] = event.data.candidatePeers
-          let index = candidatePeers.indexOf(Network.peerId)
-          if (-1 < index) candidatePeers.splice(index, 1)
+          const { candidatePeers } = event.data
+          const index = candidatePeers.indexOf(Network.peerId)
+          if (index > -1) candidatePeers.splice(index, 1)
 
-          for (let peer of candidatePeers) {
+          for (const peer of candidatePeers) {
             console.log(
-              'REQUEST_AUDIO_RESOURE AudioStorageService Relay!!! ' +
-                peer +
-                ' -> ' +
-                event.data.identifiers,
+              `REQUEST_AUDIO_RESOURE AudioStorageService Relay!!! ${peer} -> ${event.data.identifiers}`,
             )
             EventSystem.call(event, peer)
             return
           }
           console.log(
-            'REQUEST_FILE_RESOURE AudioStorageService あぶれた...' +
-              event.data.receiver,
+            `REQUEST_FILE_RESOURE AudioStorageService あぶれた...${event.data.receiver}`,
             randomRequest.length,
           )
         }
       })
       .on('UPDATE_AUDIO_RESOURE', (event) => {
-        let updateAudios: AudioFileContext[] = event.data
-        console.log(
-          'UPDATE_AUDIO_RESOURE AudioStorageService ' + event.sendFrom + ' -> ',
-          updateAudios,
-        )
-        for (let context of updateAudios) {
-          if (context.blob)
-            context.blob = new Blob([context.blob], { type: context.type })
+        const updateAudios: AudioFileContext[] = event.data
+        console.log(`UPDATE_AUDIO_RESOURE AudioStorageService ${event.sendFrom} -> `, updateAudios)
+        for (const context of updateAudios) {
+          if (context.blob) context.blob = new Blob([context.blob], { type: context.type })
           AudioStorage.instance.add(context)
         }
       })
       .on('START_AUDIO_TRANSMISSION', (event) => {
-        console.log('START_AUDIO_TRANSMISSION ' + event.data.fileIdentifier)
-        let identifier: string = event.data.fileIdentifier
-        let audio: AudioFile = AudioStorage.instance.get(identifier)
-        if (
-          this.receiveTaskMap.has(identifier) ||
-          (audio && AudioState.COMPLETE <= audio.state)
-        ) {
-          console.warn('CANCEL_TASK_ ' + identifier)
-          EventSystem.call('CANCEL_TASK_' + identifier, null, event.sendFrom)
+        console.log(`START_AUDIO_TRANSMISSION ${event.data.fileIdentifier}`)
+        const identifier: string = event.data.fileIdentifier
+        const audio: AudioFile = AudioStorage.instance.get(identifier)
+        if (this.receiveTaskMap.has(identifier) || (audio && AudioState.COMPLETE <= audio.state)) {
+          console.warn(`CANCEL_TASK_ ${identifier}`)
+          EventSystem.call(`CANCEL_TASK_${identifier}`, null, event.sendFrom)
         } else {
           this.startReceiveTask(identifier)
         }
@@ -161,19 +139,12 @@ export class AudioSharingSystem {
   }
 
   private async startSendTask(audio: AudioFile, sendTo: string) {
-    let task = BufferSharingTask.createSendTask<AudioFileContext>(
-      audio.identifier,
-      sendTo,
-    )
+    const task = BufferSharingTask.createSendTask<AudioFileContext>(audio.identifier, sendTo)
     this.sendTaskMap.set(audio.identifier, task)
 
-    EventSystem.call(
-      'START_AUDIO_TRANSMISSION',
-      { fileIdentifier: audio.identifier },
-      sendTo,
-    )
+    EventSystem.call('START_AUDIO_TRANSMISSION', { fileIdentifier: audio.identifier }, sendTo)
 
-    let context: AudioFileContext = {
+    const context: AudioFileContext = {
       identifier: audio.identifier,
       name: audio.name,
       blob: null,
@@ -184,9 +155,7 @@ export class AudioSharingSystem {
     if (audio.state === AudioState.URL) {
       context.url = audio.url
     } else {
-      context.blob = <any>(
-        await FileReaderUtil.readAsArrayBufferAsync(audio.blob)
-      )
+      context.blob = <any>await FileReaderUtil.readAsArrayBufferAsync(audio.blob)
       context.type = audio.blob.type
     }
 
@@ -199,13 +168,13 @@ export class AudioSharingSystem {
   }
 
   private startReceiveTask(identifier: string) {
-    let audio: AudioFile = AudioStorage.instance.get(identifier)
-    let task = BufferSharingTask.createReceiveTask<AudioFileContext>(identifier)
+    const audio: AudioFile = AudioStorage.instance.get(identifier)
+    const task = BufferSharingTask.createReceiveTask<AudioFileContext>(identifier)
     this.receiveTaskMap.set(identifier, task)
 
     task.onprogress = (task, loded, total) => {
-      let context = audio.toContext()
-      context.name = ((loded * 100) / total).toFixed(1) + '%'
+      const context = audio.toContext()
+      context.name = `${((loded * 100) / total).toFixed(1)}%`
       audio.apply(context)
     }
     task.onfinish = (task, data) => {
@@ -219,7 +188,7 @@ export class AudioSharingSystem {
   }
 
   private stopSendTask(identifier: string) {
-    let task = this.sendTaskMap.get(identifier)
+    const task = this.sendTaskMap.get(identifier)
     if (task) {
       task.cancel()
     }
@@ -229,7 +198,7 @@ export class AudioSharingSystem {
   }
 
   private stopReceiveTask(identifier: string) {
-    let task = this.receiveTaskMap.get(identifier)
+    const task = this.receiveTaskMap.get(identifier)
     if (task) {
       task.cancel()
     }
@@ -239,8 +208,8 @@ export class AudioSharingSystem {
   }
 
   private request(request: CatalogItem[], peer: string) {
-    console.log('requestFile() ' + peer)
-    let peers = Network.peerIds
+    console.log(`requestFile() ${peer}`)
+    const peers = Network.peerIds
     peers.splice(peers.indexOf(Network.peerId), 1)
     EventSystem.call(
       'REQUEST_AUDIO_RESOURE',
@@ -250,7 +219,7 @@ export class AudioSharingSystem {
   }
 
   private hasActiveTask(): boolean {
-    return 0 < this.sendTaskMap.size || 0 < this.receiveTaskMap.size
+    return this.sendTaskMap.size > 0 || this.receiveTaskMap.size > 0
   }
 
   private isLimitSendTask(): boolean {
@@ -262,7 +231,7 @@ export class AudioSharingSystem {
   }
 
   private existsSendTask(peer: string): boolean {
-    for (let task of this.sendTaskMap.values()) {
+    for (const task of this.sendTaskMap.values()) {
       if (task && task.sendTo === peer) return true
     }
     return false

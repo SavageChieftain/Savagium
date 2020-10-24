@@ -18,27 +18,27 @@ import { SaveDataService } from 'service/save-data.service'
   templateUrl: './game-table-setting.component.html',
   styleUrls: ['./game-table-setting.component.scss'],
 })
-export class GameTableSettingComponent
-  implements OnInit, OnDestroy, AfterViewInit {
-  minSize: number = 1
-  maxSize: number = 100
+export class GameTableSettingComponent implements OnInit, OnDestroy, AfterViewInit {
+  minSize = 1
+
+  maxSize = 100
+
   get tableBackgroundImage(): ImageFile {
     if (!this.selectedTable) return ImageFile.Empty
-    let file = ImageStorage.instance.get(this.selectedTable.imageIdentifier)
-    return file ? file : ImageFile.Empty
+    const file = ImageStorage.instance.get(this.selectedTable.imageIdentifier)
+    return file || ImageFile.Empty
   }
 
   get tableDistanceviewImage(): ImageFile {
     if (!this.selectedTable) return ImageFile.Empty
-    let file = ImageStorage.instance.get(
-      this.selectedTable.backgroundImageIdentifier,
-    )
-    return file ? file : ImageFile.Empty
+    const file = ImageStorage.instance.get(this.selectedTable.backgroundImageIdentifier)
+    return file || ImageFile.Empty
   }
 
   get tableName(): string {
     return this.selectedTable.name
   }
+
   set tableName(tableName: string) {
     if (this.isEditable) this.selectedTable.name = tableName
   }
@@ -46,6 +46,7 @@ export class GameTableSettingComponent
   get tableWidth(): number {
     return this.selectedTable.width
   }
+
   set tableWidth(tableWidth: number) {
     if (this.isEditable) this.selectedTable.width = tableWidth
   }
@@ -53,6 +54,7 @@ export class GameTableSettingComponent
   get tableHeight(): number {
     return this.selectedTable.height
   }
+
   set tableHeight(tableHeight: number) {
     if (this.isEditable) this.selectedTable.height = tableHeight
   }
@@ -60,6 +62,7 @@ export class GameTableSettingComponent
   get tableGridColor(): string {
     return this.selectedTable.gridColor
   }
+
   set tableGridColor(tableGridColor: string) {
     if (this.isEditable) this.selectedTable.gridColor = tableGridColor
   }
@@ -67,6 +70,7 @@ export class GameTableSettingComponent
   get tableGridShow(): boolean {
     return this.tableSelecter.gridShow
   }
+
   set tableGridShow(tableGridShow: boolean) {
     this.tableSelecter.gridShow = tableGridShow
     EventSystem.trigger('UPDATE_GAME_OBJECT', this.tableSelecter.toContext()) // 自分にだけイベントを発行してグリッド更新を誘発
@@ -75,6 +79,7 @@ export class GameTableSettingComponent
   get tableGridSnap(): boolean {
     return this.tableSelecter.gridSnap
   }
+
   set tableGridSnap(tableGridSnap: boolean) {
     this.tableSelecter.gridSnap = tableGridSnap
   }
@@ -82,6 +87,7 @@ export class GameTableSettingComponent
   get tableGridType(): GridType {
     return this.selectedTable.gridType
   }
+
   set tableGridType(gridType: GridType) {
     if (this.isEditable) this.selectedTable.gridType = Number(gridType)
   }
@@ -89,6 +95,7 @@ export class GameTableSettingComponent
   get tableDistanceviewFilter(): FilterType {
     return this.selectedTable.backgroundFilterType
   }
+
   set tableDistanceviewFilter(filterType: FilterType) {
     if (this.isEditable) this.selectedTable.backgroundFilterType = filterType
   }
@@ -98,27 +105,25 @@ export class GameTableSettingComponent
   }
 
   selectedTable: GameTable = null
-  selectedTableXml: string = ''
+
+  selectedTableXml = ''
 
   get isEmpty(): boolean {
-    return this.tableSelecter
-      ? this.tableSelecter.viewTable
-        ? false
-        : true
-      : true
+    return this.tableSelecter ? !this.tableSelecter.viewTable : true
   }
+
   get isDeleted(): boolean {
     if (!this.selectedTable) return true
-    return (
-      ObjectStore.instance.get<GameTable>(this.selectedTable.identifier) == null
-    )
+    return ObjectStore.instance.get<GameTable>(this.selectedTable.identifier) == null
   }
+
   get isEditable(): boolean {
     return !this.isEmpty && !this.isDeleted
   }
 
-  isSaveing: boolean = false
-  progresPercent: number = 0
+  isSaveing = false
+
+  progresPercent = 0
 
   constructor(
     private modalService: ModalService,
@@ -128,17 +133,12 @@ export class GameTableSettingComponent
 
   ngOnInit() {
     Promise.resolve().then(
-      () =>
-        (this.modalService.title = this.panelService.title = 'テーブル設定'),
+      () => (this.modalService.title = this.panelService.title = 'テーブル設定'),
     )
     this.selectedTable = this.tableSelecter.viewTable
     EventSystem.register(this).on('DELETE_GAME_OBJECT', 1000, (event) => {
-      if (
-        !this.selectedTable ||
-        event.data.identifier !== this.selectedTable.identifier
-      )
-        return
-      let object = ObjectStore.instance.get(event.data.identifier)
+      if (!this.selectedTable || event.data.identifier !== this.selectedTable.identifier) return
+      const object = ObjectStore.instance.get(event.data.identifier)
       if (object !== null) {
         this.selectedTableXml = object.toXml()
       }
@@ -152,11 +152,7 @@ export class GameTableSettingComponent
   }
 
   selectGameTable(identifier: string) {
-    EventSystem.call(
-      'SELECT_GAME_TABLE',
-      { identifier: identifier },
-      Network.peerId,
-    )
+    EventSystem.call('SELECT_GAME_TABLE', { identifier }, Network.peerId)
     this.selectedTable = ObjectStore.instance.get<GameTable>(identifier)
     this.selectedTableXml = ''
   }
@@ -166,7 +162,7 @@ export class GameTableSettingComponent
   }
 
   createGameTable() {
-    let gameTable = new GameTable()
+    const gameTable = new GameTable()
     gameTable.name = '白紙のテーブル'
     gameTable.imageIdentifier = 'testTableBackgroundImage_image'
     gameTable.initialize()
@@ -181,7 +177,7 @@ export class GameTableSettingComponent
     this.selectedTable.selected = true
     await this.saveDataService.saveGameObjectAsync(
       this.selectedTable,
-      'map_' + this.selectedTable.name,
+      `map_${this.selectedTable.name}`,
       (percent) => {
         this.progresPercent = percent
       },
@@ -202,9 +198,7 @@ export class GameTableSettingComponent
 
   restore() {
     if (this.selectedTable && this.selectedTableXml) {
-      let restoreTable = ObjectSerializer.instance.parseXml(
-        this.selectedTableXml,
-      )
+      const restoreTable = ObjectSerializer.instance.parseXml(this.selectedTableXml)
       this.selectGameTable(restoreTable.identifier)
       this.selectedTableXml = ''
     }

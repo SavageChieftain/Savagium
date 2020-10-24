@@ -9,6 +9,7 @@ export type CatalogItem = {
 
 export class ImageStorage {
   private static _instance: ImageStorage
+
   static get instance(): ImageStorage {
     if (!ImageStorage._instance) ImageStorage._instance = new ImageStorage()
     return ImageStorage._instance
@@ -17,8 +18,8 @@ export class ImageStorage {
   private imageHash: { [identifier: string]: ImageFile } = {}
 
   get images(): ImageFile[] {
-    let images: ImageFile[] = []
-    for (let identifier in this.imageHash) {
+    const images: ImageFile[] = []
+    for (const identifier in this.imageHash) {
       images.push(this.imageHash[identifier])
     }
     return images
@@ -31,7 +32,7 @@ export class ImageStorage {
   }
 
   private destroy() {
-    for (let identifier in this.imageHash) {
+    for (const identifier in this.imageHash) {
       this.delete(identifier)
     }
   }
@@ -39,7 +40,7 @@ export class ImageStorage {
   async addAsync(file: File): Promise<ImageFile>
   async addAsync(blob: Blob): Promise<ImageFile>
   async addAsync(arg: any): Promise<ImageFile> {
-    let image: ImageFile = await ImageFile.createAsync(arg)
+    const image: ImageFile = await ImageFile.createAsync(arg)
 
     return this._add(image)
   }
@@ -64,7 +65,7 @@ export class ImageStorage {
     if (ImageState.COMPLETE <= image.state) this.lazySynchronize(100)
     if (this.update(image)) return this.imageHash[image.identifier]
     this.imageHash[image.identifier] = image
-    console.log('add Image: ' + image.identifier)
+    console.log(`add Image: ${image.identifier}`)
     return image
   }
 
@@ -77,7 +78,7 @@ export class ImageStorage {
     } else {
       context = image
     }
-    let updatingImage: ImageFile = this.imageHash[image.identifier]
+    const updatingImage: ImageFile = this.imageHash[image.identifier]
     if (updatingImage) {
       updatingImage.apply(image)
       return true
@@ -86,7 +87,7 @@ export class ImageStorage {
   }
 
   delete(identifier: string): boolean {
-    let deleteImage: ImageFile = this.imageHash[identifier]
+    const deleteImage: ImageFile = this.imageHash[identifier]
     if (deleteImage) {
       deleteImage.destroy()
       delete this.imageHash[identifier]
@@ -96,7 +97,7 @@ export class ImageStorage {
   }
 
   get(identifier: string): ImageFile {
-    let image: ImageFile = this.imageHash[identifier]
+    const image: ImageFile = this.imageHash[identifier]
     if (image) return image
     return null
   }
@@ -113,8 +114,8 @@ export class ImageStorage {
   }
 
   getCatalog(): CatalogItem[] {
-    let catalog: CatalogItem[] = []
-    for (let image of this.images) {
+    const catalog: CatalogItem[] = []
+    for (const image of this.images) {
       if (ImageState.COMPLETE <= image.state) {
         catalog.push({ identifier: image.identifier, state: image.state })
       }

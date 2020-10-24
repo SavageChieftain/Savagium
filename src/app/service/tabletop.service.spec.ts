@@ -1,15 +1,15 @@
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing'
 
-import { TabletopService } from './tabletop.service';
+import { TabletopService } from './tabletop.service'
 
 describe('TabletopService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [TabletopService]
-    });
-  });
+      providers: [TabletopService],
+    })
+  })
 
   it('should be created', inject([TabletopService], (service: TabletopService) => {
-    expect(service).toBeTruthy();
-  }));
-});
+    expect(service).toBeTruthy()
+  }))
+})

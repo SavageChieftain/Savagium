@@ -54,11 +54,16 @@ import { SaveDataService } from 'service/save-data.service'
 export class AppComponent implements AfterViewInit, OnDestroy {
   @ViewChild('modalLayer', { read: ViewContainerRef, static: true })
   modalLayerViewContainerRef: ViewContainerRef
+
   private immediateUpdateTimer: NodeJS.Timer = null
+
   private lazyUpdateTimer: NodeJS.Timer = null
-  private openPanelCount: number = 0
-  isSaveing: boolean = false
-  progresPercent: number = 0
+
+  private openPanelCount = 0
+
+  isSaveing = false
+
+  progresPercent = 0
 
   constructor(
     private modalService: ModalService,
@@ -88,21 +93,21 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     ChatTabList.instance.initialize()
     DataSummarySetting.instance.initialize()
 
-    let diceBot: DiceBot = new DiceBot('DiceBot')
+    const diceBot: DiceBot = new DiceBot('DiceBot')
     diceBot.initialize()
 
-    let jukebox: Jukebox = new Jukebox('Jukebox')
+    const jukebox: Jukebox = new Jukebox('Jukebox')
     jukebox.initialize()
 
-    let soundEffect: SoundEffect = new SoundEffect('SoundEffect')
+    const soundEffect: SoundEffect = new SoundEffect('SoundEffect')
     soundEffect.initialize()
 
     ChatTabList.instance.addChatTab('メインタブ', 'MainTab')
     ChatTabList.instance.addChatTab('サブタブ', 'SubTab')
 
-    let fileContext = ImageFile.createEmpty('none_icon').toContext()
+    const fileContext = ImageFile.createEmpty('none_icon').toContext()
     fileContext.url = './assets/images/ic_account_circle_black_24dp_2x.png'
-    let noneIconImage = ImageStorage.instance.add(fileContext)
+    const noneIconImage = ImageStorage.instance.add(fileContext)
 
     AudioPlayer.resumeAudioContext()
     PresetSound.dicePick = AudioStorage.instance.add(
@@ -141,15 +146,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     PresetSound.blockPut = AudioStorage.instance.add(
       './assets/sounds/tm2/tm2_pon002.wav',
     ).identifier
-    PresetSound.lock = AudioStorage.instance.add(
-      './assets/sounds/tm2/tm2_switch001.wav',
-    ).identifier
+    PresetSound.lock = AudioStorage.instance.add('./assets/sounds/tm2/tm2_switch001.wav').identifier
     PresetSound.unlock = AudioStorage.instance.add(
       './assets/sounds/tm2/tm2_switch001.wav',
     ).identifier
-    PresetSound.sweep = AudioStorage.instance.add(
-      './assets/sounds/tm2/tm2_swing003.wav',
-    ).identifier
+    PresetSound.sweep = AudioStorage.instance.add('./assets/sounds/tm2/tm2_swing003.wav').identifier
 
     AudioStorage.instance.get(PresetSound.dicePick).isHidden = true
     AudioStorage.instance.get(PresetSound.dicePut).isHidden = true
@@ -189,7 +190,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         Network.setApiKey(event.data.webrtc.key)
         Network.open()
       })
-      .on<File>('FILE_LOADED', (event) => {
+      .on<File>('FILE_LOADED', () => {
         this.lazyNgZoneUpdate(false)
       })
       .on('OPEN_NETWORK', (event) => {
@@ -199,7 +200,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       .on('CLOSE_NETWORK', (event) => {
         console.log('CLOSE_NETWORK', event.data.peer)
         this.ngZone.run(async () => {
-          if (1 < Network.peerIds.length) {
+          if (Network.peerIds.length > 1) {
             await this.modalService.open(TextViewComponent, {
               title: 'ネットワークエラー',
               text:
@@ -208,8 +209,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
           } else {
             await this.modalService.open(TextViewComponent, {
               title: 'ネットワークエラー',
-              text:
-                '接続情報が破棄されました。\nこのウィンドウを閉じると再接続を試みます。',
+              text: '接続情報が破棄されました。\nこのウィンドウを閉じると再接続を試みます。',
             })
             Network.open()
           }
@@ -225,10 +225,12 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    PanelService.defaultParentViewContainerRef = ModalService.defaultParentViewContainerRef = ContextMenuService.defaultParentViewContainerRef = this.modalLayerViewContainerRef
+    PanelService.defaultParentViewContainerRef = this.modalLayerViewContainerRef
+    ModalService.defaultParentViewContainerRef = this.modalLayerViewContainerRef
+    ContextMenuService.defaultParentViewContainerRef = this.modalLayerViewContainerRef
     setTimeout(() => {
-      //this.panelService.open(PeerMenuComponent, { width: 500, height: 450, left: 100 });
-      //this.panelService.open(ChatWindowComponent, { width: 700, height: 400, left: 100, top: 450 });
+      // this.panelService.open(PeerMenuComponent, { width: 500, height: 450, left: 100 });
+      // this.panelService.open(ChatWindowComponent, { width: 700, height: 400, left: 100, top: 450 });
     }, 0)
   }
 
@@ -267,11 +269,12 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       case 'GameObjectInventoryComponent':
         component = GameObjectInventoryComponent
         break
+      default:
     }
     if (component) {
       option.top = ((this.openPanelCount % 10) + 1) * 20
       option.left = 100 + ((this.openPanelCount % 20) + 1) * 5
-      this.openPanelCount = this.openPanelCount + 1
+      this.openPanelCount += 1
       this.panelService.open(component, option)
     }
   }
@@ -281,8 +284,8 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.isSaveing = true
     this.progresPercent = 0
 
-    let roomName =
-      Network.peerContext && 0 < Network.peerContext.roomName.length
+    const roomName =
+      Network.peerContext && Network.peerContext.roomName.length > 0
         ? Network.peerContext.roomName
         : 'ルームデータ'
     await this.saveDataService.saveRoomAsync(roomName, (percent) => {
@@ -296,7 +299,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   handleFileSelect(event: Event) {
-    let files = (<HTMLInputElement>event.target).files
+    const { files } = <HTMLInputElement>event.target
     if (files.length) FileArchiver.instance.load(files)
   }
 

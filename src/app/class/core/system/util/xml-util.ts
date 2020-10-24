@@ -18,12 +18,12 @@ export namespace XmlUtil {
   }
 
   export function xml2element(xml: string) {
-    let domParser: DOMParser = new DOMParser()
+    const domParser: DOMParser = new DOMParser()
     let xmlDocument: Document = null
     try {
       xml = sanitizeXml(xml)
       xmlDocument = domParser.parseFromString(xml, 'application/xml')
-      let parsererror = xmlDocument.getElementsByTagName('parsererror')
+      const parsererror = xmlDocument.getElementsByTagName('parsererror')
       if (parsererror.length) {
         console.error('XMLのパースに失敗しました', xmlDocument.documentElement)
         xmlDocument = null
@@ -43,12 +43,7 @@ export namespace XmlUtil {
   }
 
   function sanitizeXml(xml: string): string {
-    return xml
-      .replace(
-        /([^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFC\u{10000}-\u{10FFFF}])/gu,
-        '',
-      )
-      .trim()
+    return xml.replace(/([^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFC\u{10000}-\u{10FFFF}])/gu, '').trim()
   }
 
   function encodeReplacer(char: string): string {

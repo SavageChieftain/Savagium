@@ -1,8 +1,8 @@
-import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
-import { ObjectNode } from './core/synchronize-object/object-node';
-import { EventSystem } from './core/system';
-import { GameTableMask } from './game-table-mask';
-import { Terrain } from './terrain';
+import { SyncObject, SyncVar } from './core/synchronize-object/decorator'
+import { ObjectNode } from './core/synchronize-object/object-node'
+import { EventSystem } from './core/system'
+import { GameTableMask } from './game-table-mask'
+import { Terrain } from './terrain'
 
 export enum GridType {
   NONE = -1,
@@ -19,36 +19,45 @@ export enum FilterType {
 
 @SyncObject('game-table')
 export class GameTable extends ObjectNode {
-  @SyncVar() name: string = 'テーブル';
-  @SyncVar() width: number = 20;
-  @SyncVar() height: number = 20;
-  @SyncVar() gridSize: number = 50;
-  @SyncVar() imageIdentifier: string = 'imageIdentifier';
-  @SyncVar() backgroundImageIdentifier: string = 'imageIdentifier';
-  @SyncVar() backgroundFilterType: FilterType = FilterType.NONE;
-  @SyncVar() selected: boolean = false;
-  @SyncVar() gridType: GridType = GridType.SQUARE;
-  @SyncVar() gridColor: string = '#000000e6';
+  @SyncVar() name = 'テーブル'
+
+  @SyncVar() width = 20
+
+  @SyncVar() height = 20
+
+  @SyncVar() gridSize = 50
+
+  @SyncVar() imageIdentifier = 'imageIdentifier'
+
+  @SyncVar() backgroundImageIdentifier = 'imageIdentifier'
+
+  @SyncVar() backgroundFilterType: FilterType = FilterType.NONE
+
+  @SyncVar() selected = false
+
+  @SyncVar() gridType: GridType = GridType.SQUARE
+
+  @SyncVar() gridColor = '#000000e6'
 
   get terrains(): Terrain[] {
-    let terrains: Terrain[] = [];
-    this.children.forEach(object => {
-      if (object instanceof Terrain) terrains.push(object);
-    });
-    return terrains;
+    const terrains: Terrain[] = []
+    this.children.forEach((object) => {
+      if (object instanceof Terrain) terrains.push(object)
+    })
+    return terrains
   }
 
   get masks(): GameTableMask[] {
-    let masks: GameTableMask[] = [];
-    this.children.forEach(object => {
-      if (object instanceof GameTableMask) masks.push(object);
-    });
-    return masks;
+    const masks: GameTableMask[] = []
+    this.children.forEach((object) => {
+      if (object instanceof GameTableMask) masks.push(object)
+    })
+    return masks
   }
 
   // GameObject Lifecycle
   onStoreAdded() {
-    super.onStoreAdded();
-    if (this.selected) EventSystem.trigger('SELECT_GAME_TABLE', { identifier: this.identifier });
+    super.onStoreAdded()
+    if (this.selected) EventSystem.trigger('SELECT_GAME_TABLE', { identifier: this.identifier })
   }
 }

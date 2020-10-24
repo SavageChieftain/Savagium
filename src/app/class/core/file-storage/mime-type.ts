@@ -28,20 +28,20 @@ export namespace MimeType {
     mpg: 'video/mpeg',
     mpeg: 'video/mpeg',
     mp4: 'video/mp4',
-    webm: 'video/webm'
-  };
+    webm: 'video/webm',
+  }
 
   export function type(fileName: string): string {
-    let ext = fileName.replace(/.*[\.\/\\]/, '').toLowerCase();
-    return types[ext] ? types[ext] : '';
+    const ext = fileName.replace(/.*[\.\/\\]/, '').toLowerCase()
+    return types[ext] ? types[ext] : ''
   }
 
   export function extension(mimeType: string): string {
-    for (let key in types) {
+    for (const key in types) {
       if (types[key] === mimeType) {
-        return key;
+        return key
       }
     }
-    return mimeType.split('/')[1];
+    return mimeType.split('/')[1]
   }
 }

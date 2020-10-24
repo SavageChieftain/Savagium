@@ -15,8 +15,8 @@ export interface PaletteVariable {
 
 @SyncObject('chat-palette')
 export class ChatPalette extends ObjectNode {
-  @SyncVar() dicebot: string = 'DiceBot'
-  //TODO: キャラシ項目のコピー
+  @SyncVar() dicebot = 'DiceBot'
+  // TODO: キャラシ項目のコピー
 
   get paletteLines(): PaletteLine[] {
     if (!this.isAnalized) this.parse(<string>this.value)
@@ -29,9 +29,12 @@ export class ChatPalette extends ObjectNode {
   }
 
   private _palettes: string[] = []
+
   private _paletteLines: PaletteLine[] = []
+
   private _paletteVariables: PaletteVariable[] = []
-  private isAnalized: boolean = false
+
+  private isAnalized = false
 
   getPalette(): string[] {
     if (!this.isAnalized) this.parse(<string>this.value)
@@ -46,7 +49,7 @@ export class ChatPalette extends ObjectNode {
   evaluate(line: PaletteLine, extendVariables?: DataElement): string
   evaluate(line: string, extendVariables?: DataElement): string
   evaluate(line: any, extendVariables?: DataElement): string {
-    let evaluate: string = ''
+    let evaluate = ''
     if (typeof line === 'string') {
       evaluate = line
     } else {
@@ -54,31 +57,26 @@ export class ChatPalette extends ObjectNode {
     }
 
     console.log(evaluate)
-    let limit = 128
+    const limit = 128
     let loop = 0
     let isContinue = true
     while (isContinue) {
       loop++
       isContinue = false
-      evaluate = evaluate.replace(
-        /[{｛]\s*([^{}｛｝]+)\s*[}｝]/g,
-        (match, name) => {
-          name = StringUtil.toHalfWidth(name)
-          console.log(name)
-          isContinue = true
-          for (let variable of this.paletteVariables) {
-            if (variable.name == name) return variable.value
-          }
-          if (extendVariables) {
-            let element = extendVariables.getFirstElementByName(name)
-            if (element)
-              return element.isNumberResource
-                ? element.currentValue + ''
-                : element.value + ''
-          }
-          return ''
-        },
-      )
+      evaluate = evaluate.replace(/[{｛]\s*([^{}｛｝]+)\s*[}｝]/g, (match, name) => {
+        name = StringUtil.toHalfWidth(name)
+        console.log(name)
+        isContinue = true
+        for (const variable of this.paletteVariables) {
+          if (variable.name == name) return variable.value
+        }
+        if (extendVariables) {
+          const element = extendVariables.getFirstElementByName(name)
+          if (element)
+            return element.isNumberResource ? `${element.currentValue}` : `${element.value}`
+        }
+        return ''
+      })
       if (limit < loop) isContinue = false
     }
     return evaluate
@@ -90,24 +88,22 @@ export class ChatPalette extends ObjectNode {
     this._paletteLines = []
     this._paletteVariables = []
 
-    for (let palette of this._palettes) {
-      let variable = this.parseVariable(palette)
+    for (const palette of this._palettes) {
+      const variable = this.parseVariable(palette)
       if (variable) {
         this._paletteVariables.push(variable)
         continue
       }
-      let line: PaletteLine = { palette: palette }
+      const line: PaletteLine = { palette }
       this._paletteLines.push(line)
     }
     this.isAnalized = true
   }
 
   private parseVariable(palette: string): PaletteVariable {
-    let array = /^\s*[/／]{2}([^=＝{}｛｝\s]+)\s*[=＝]\s*(.+)\s*/gi.exec(
-      palette,
-    )
+    const array = /^\s*[/／]{2}([^=＝{}｛｝\s]+)\s*[=＝]\s*(.+)\s*/gi.exec(palette)
     if (!array) return null
-    let variable: PaletteVariable = {
+    const variable: PaletteVariable = {
       name: StringUtil.toHalfWidth(array[1]),
       value: array[2],
     }

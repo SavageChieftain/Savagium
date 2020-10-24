@@ -1,10 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  Input,
-  OnDestroy,
-  OnInit,
-} from '@angular/core'
+import { AfterViewInit, Component, Input, OnDestroy, OnInit } from '@angular/core'
 
 import { EventSystem, Network } from '@udonarium/core/system'
 import { DataElement } from '@udonarium/data-element'
@@ -21,15 +15,16 @@ import { SaveDataService } from 'service/save-data.service'
   templateUrl: './game-character-sheet.component.html',
   styleUrls: ['./game-character-sheet.component.scss'],
 })
-export class GameCharacterSheetComponent
-  implements OnInit, OnDestroy, AfterViewInit {
+export class GameCharacterSheetComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() tabletopObject: TabletopObject = null
-  isEdit: boolean = false
+
+  isEdit = false
 
   networkService = Network
 
-  isSaveing: boolean = false
-  progresPercent: number = 0
+  isSaveing = false
+
+  progresPercent = 0
 
   constructor(
     private saveDataService: SaveDataService,
@@ -39,10 +34,7 @@ export class GameCharacterSheetComponent
 
   ngOnInit() {
     EventSystem.register(this).on('DELETE_GAME_OBJECT', -1000, (event) => {
-      if (
-        this.tabletopObject &&
-        this.tabletopObject.identifier === event.data.identifier
-      ) {
+      if (this.tabletopObject && this.tabletopObject.identifier === event.data.identifier) {
         this.panelService.close()
       }
     })
@@ -55,24 +47,23 @@ export class GameCharacterSheetComponent
   }
 
   toggleEditMode() {
-    this.isEdit = this.isEdit ? false : true
+    this.isEdit = !this.isEdit
   }
 
   addDataElement() {
     if (this.tabletopObject.detailDataElement) {
-      let title = DataElement.create('見出し', '', {})
-      let tag = DataElement.create('タグ', '', {})
+      const title = DataElement.create('見出し', '', {})
+      const tag = DataElement.create('タグ', '', {})
       title.appendChild(tag)
       this.tabletopObject.detailDataElement.appendChild(title)
     }
   }
 
   clone() {
-    let cloneObject = this.tabletopObject.clone()
+    const cloneObject = this.tabletopObject.clone()
     cloneObject.location.x += 50
     cloneObject.location.y += 50
-    if (this.tabletopObject.parent)
-      this.tabletopObject.parent.appendChild(cloneObject)
+    if (this.tabletopObject.parent) this.tabletopObject.parent.appendChild(cloneObject)
     cloneObject.update()
     switch (this.tabletopObject.aliasName) {
       case 'terrain':
@@ -104,15 +95,12 @@ export class GameCharacterSheetComponent
     this.isSaveing = true
     this.progresPercent = 0
 
-    let element = this.tabletopObject.getElement(
-      'name',
-      this.tabletopObject.commonDataElement,
-    )
-    let objectName: string = element ? <string>element.value : ''
+    const element = this.tabletopObject.getElement('name', this.tabletopObject.commonDataElement)
+    const objectName: string = element ? <string>element.value : ''
 
     await this.saveDataService.saveGameObjectAsync(
       this.tabletopObject,
-      'xml_' + objectName,
+      `xml_${objectName}`,
       (percent) => {
         this.progresPercent = percent
       },
@@ -130,17 +118,10 @@ export class GameCharacterSheetComponent
 
   openModal(name: string = '', isAllowedEmpty: boolean = false) {
     this.modalService
-      .open<string>(FileSelecterComponent, { isAllowedEmpty: isAllowedEmpty })
+      .open<string>(FileSelecterComponent, { isAllowedEmpty })
       .then((value) => {
-        if (
-          !this.tabletopObject ||
-          !this.tabletopObject.imageDataElement ||
-          !value
-        )
-          return
-        let element = this.tabletopObject.imageDataElement.getFirstElementByName(
-          name,
-        )
+        if (!this.tabletopObject || !this.tabletopObject.imageDataElement || !value) return
+        const element = this.tabletopObject.imageDataElement.getFirstElementByName(name)
         if (!element) return
         element.value = value
       })

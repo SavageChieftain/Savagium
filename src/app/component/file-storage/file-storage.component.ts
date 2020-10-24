@@ -22,10 +22,8 @@ import { PanelService } from 'service/panel.service'
 })
 export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
   fileStorageService = ImageStorage.instance
-  constructor(
-    private changeDetector: ChangeDetectorRef,
-    private panelService: PanelService,
-  ) {}
+
+  constructor(private changeDetector: ChangeDetectorRef, private panelService: PanelService) {}
 
   ngOnInit() {
     Promise.resolve().then(() => (this.panelService.title = 'ファイル一覧'))
@@ -44,16 +42,12 @@ export class FileStorageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleFileSelect(event: Event) {
-    let files = (<HTMLInputElement>event.target).files
+    const { files } = <HTMLInputElement>event.target
     if (files.length) FileArchiver.instance.load(files)
   }
 
   onSelectedFile(file: ImageFile) {
     console.log('onSelectedFile', file)
-    EventSystem.call(
-      'SELECT_FILE',
-      { fileIdentifier: file.identifier },
-      Network.peerId,
-    )
+    EventSystem.call('SELECT_FILE', { fileIdentifier: file.identifier }, Network.peerId)
   }
 }

@@ -2,18 +2,18 @@ import { AudioFile } from './core/file-storage/audio-file'
 import { AudioPlayer } from './core/file-storage/audio-player'
 import { AudioStorage } from './core/file-storage/audio-storage'
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator'
-import {
-  GameObject,
-  ObjectContext,
-} from './core/synchronize-object/game-object'
+import { GameObject, ObjectContext } from './core/synchronize-object/game-object'
 import { EventSystem } from './core/system'
 
 @SyncObject('jukebox')
 export class Jukebox extends GameObject {
-  @SyncVar() audioIdentifier: string = ''
-  @SyncVar() startTime: number = 0
-  @SyncVar() isLoop: boolean = false
-  @SyncVar() isPlaying: boolean = false
+  @SyncVar() audioIdentifier = ''
+
+  @SyncVar() startTime = 0
+
+  @SyncVar() isLoop = false
+
+  @SyncVar() isPlaying = false
 
   get audio(): AudioFile {
     return AudioStorage.instance.get(this.audioIdentifier)
@@ -34,7 +34,7 @@ export class Jukebox extends GameObject {
   }
 
   play(identifier: string, isLoop: boolean = false) {
-    let audio = AudioStorage.instance.get(identifier)
+    const audio = AudioStorage.instance.get(identifier)
     if (!audio || !audio.isReady) return
     this.audioIdentifier = identifier
     this.isPlaying = true
@@ -69,7 +69,7 @@ export class Jukebox extends GameObject {
   }
 
   private unlockAfterUserInteraction() {
-    let callback = () => {
+    const callback = () => {
       document.body.removeEventListener('touchstart', callback, true)
       document.body.removeEventListener('mousedown', callback, true)
       this.audioPlayer.stop()
@@ -85,13 +85,10 @@ export class Jukebox extends GameObject {
 
   // override
   apply(context: ObjectContext) {
-    let audioIdentifier = this.audioIdentifier
-    let isPlaying = this.isPlaying
+    const { audioIdentifier } = this
+    const { isPlaying } = this
     super.apply(context)
-    if (
-      (audioIdentifier !== this.audioIdentifier || !isPlaying) &&
-      this.isPlaying
-    ) {
+    if ((audioIdentifier !== this.audioIdentifier || !isPlaying) && this.isPlaying) {
       this._play()
     } else if (isPlaying !== this.isPlaying && !this.isPlaying) {
       this._stop()

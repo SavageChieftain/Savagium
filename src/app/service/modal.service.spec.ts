@@ -1,15 +1,15 @@
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing'
 
-import { ModalService } from './modal.service';
+import { ModalService } from './modal.service'
 
 describe('ModalService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ModalService]
-    });
-  });
+      providers: [ModalService],
+    })
+  })
 
   it('should ...', inject([ModalService], (service: ModalService) => {
-    expect(service).toBeTruthy();
-  }));
-});
+    expect(service).toBeTruthy()
+  }))
+})

@@ -3,12 +3,32 @@ import { ObjectFactory } from './object-factory'
 import { ObjectSerializer } from './object-serializer'
 import { ObjectStore } from './object-store'
 
+export interface SyncData extends Object {
+  peerId?: string
+}
+
 export interface ObjectContext {
   aliasName: string
   identifier: string
   majorVersion: number
   minorVersion: number
-  syncData: Object
+  syncData: SyncData
+}
+
+function deepCopy<T extends Object>(obj: T): T {
+  const clone: any = {}
+  for (const key in obj) {
+    if (typeof obj[key] === 'object') {
+      if (Array.isArray(obj)) {
+        clone[key] = JSON.parse(JSON.stringify(this.context.syncData))
+      } else {
+        clone[key] = deepCopy(obj[key])
+      }
+    } else {
+      clone[key] = obj[key]
+    }
+  }
+  return clone
 }
 
 export class GameObject {
@@ -17,18 +37,21 @@ export class GameObject {
     identifier: '',
     majorVersion: 0,
     minorVersion: 0,
-    syncData: {},
+    syncData: { peerId: '' },
   }
 
   static get aliasName() {
     return ObjectFactory.instance.getAlias(this)
   }
+
   get aliasName() {
     return this.context.aliasName
   }
+
   get identifier() {
     return this.context.identifier
   }
+
   get version() {
     return this.context.majorVersion + this.context.minorVersion
   }
@@ -70,7 +93,7 @@ export class GameObject {
   }
 
   clone(): this {
-    let xmlString = this.toXml()
+    const xmlString = this.toXml()
     return <this>ObjectSerializer.instance.parseXml(xmlString)
   }
 
@@ -87,20 +110,4 @@ export class GameObject {
   toXml(): string {
     return ObjectSerializer.instance.toXml(this)
   }
-}
-
-function deepCopy<T extends Object>(obj: T): T {
-  let clone: any = {}
-  for (let key in obj) {
-    if (typeof obj[key] === 'object') {
-      if (Array.isArray(obj)) {
-        clone[key] = JSON.parse(JSON.stringify(this.context.syncData))
-      } else {
-        clone[key] = deepCopy(obj[key])
-      }
-    } else {
-      clone[key] = obj[key]
-    }
-  }
-  return clone
 }
