@@ -58,7 +58,7 @@
       <button (click)="showDicebotHelp()">?</button>
     </div>
     <div class="table-cell">
-      <form style="width: 70%">
+      <form>
         <textarea
           class="chat-input"
           placeholder="Enterで改行 Shift + Enterで送信"
@@ -71,7 +71,17 @@
           #textArea
         ></textarea>
       </form>
+      <i class="material-icons" (click)="switchEmojiPickerState()"
+        >sentiment_very_satisfied</i
+      >
       <button type="submit" (click)="sendChat(null)">SEND</button>
+      <emoji-mart
+        *ngIf="pickerState"
+        set="twitter"
+        title=""
+        showSingleCategory="true"
+        (emojiClick)="addEmoji($event)"
+      ></emoji-mart>
     </div>
     <div class="writing-info">
       <ng-container *ngIf="0 < writingPeerNames.length">

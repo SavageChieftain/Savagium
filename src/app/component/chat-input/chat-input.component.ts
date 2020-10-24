@@ -10,6 +10,8 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core'
+import { EmojiModule, EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji'
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart'
 import { ChatMessage } from '@udonarium/chat-message'
 import { ImageFile } from '@udonarium/core/file-storage/image-file'
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store'
@@ -22,6 +24,7 @@ import { TextViewComponent } from 'component/text-view/text-view.component'
 import { ChatMessageService } from 'service/chat-message.service'
 import { PanelOption, PanelService } from 'service/panel.service'
 import { PointerDeviceService } from 'service/pointer-device.service'
+import { from } from 'rxjs'
 
 @Component({
   selector: 'chat-input',
@@ -127,11 +130,15 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     return ObjectStore.instance.getObjects(PeerCursor)
   }
 
+  public pickerState: boolean = false
+  private emojiRegex: RegExp = /(:[^\s:]+(?:::skin-tone-[2-6])?:)/g
+
   constructor(
     private ngZone: NgZone,
     public chatMessageService: ChatMessageService,
     private panelService: PanelService,
     private pointerDeviceService: PointerDeviceService,
+    private emojiSearch: EmojiSearch,
   ) {}
 
   ngOnInit(): void {
@@ -199,12 +206,25 @@ export class ChatInputComponent implements OnInit, OnDestroy {
       },
     )
   }
-
+  addEmoji($event: { $event: MouseEvent; emoji: EmojiData }) {
+    this.text = `${this.text}${$event.emoji.native}`
+  }
   onInput() {
     if (
       this.writingEventInterval === null &&
       this.previousWritingLength <= this.text.length
     ) {
+      const replaced = this.text.replace(this.emojiRegex, (match) => {
+        const value = match.replace(/:/g, '')
+        const list = this.emojiSearch.search(value).map((o) => {
+          return o.native
+        })
+        console.log(list.length)
+        console.log(list[0])
+        return list.length > 0 ? list[0] : match
+      })
+      this.text = replaced
+
       let sendTo: string = null
       if (this.isDirect) {
         let object = ObjectStore.instance.get(this.sendTo)
@@ -302,6 +322,11 @@ export class ChatInputComponent implements OnInit, OnDestroy {
         '===================================\n' +
         this.gameHelp
     })
+  }
+
+  switchEmojiPickerState(): void {
+    this.pickerState = !this.pickerState
+    console.log(this.pickerState)
   }
 
   private allowsChat(gameCharacter: GameCharacter): boolean {
