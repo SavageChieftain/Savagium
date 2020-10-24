@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common'
 import { NgModule } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { NgSelectModule } from '@ng-select/ng-select'
+import { PickerModule } from '@ctrl/ngx-emoji-mart'
+import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji'
 import { BrowserModule } from '@angular/platform-browser'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { BadgeComponent } from 'component/badge/badge.component'
@@ -107,8 +109,10 @@ import { AppComponent } from './app.component'
     BrowserModule,
     BrowserAnimationsModule,
     CommonModule,
+    EmojiModule,
     FormsModule,
     NgSelectModule,
+    PickerModule,
   ],
   providers: [
     AppConfigService,

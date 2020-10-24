@@ -1,4 +1,5 @@
-@import "~@ng-select/ng-select/themes/default.theme.css";
+@import '~@ng-select/ng-select/themes/default.theme.css';
+@import '~@ctrl/ngx-emoji-mart/picker';
 
 .table {
   box-sizing: border-box;
@@ -20,6 +21,10 @@
       justify-content: flex-start;
       align-items: center;
       width: 100%;
+      margin-bottom: 0.313em;
+      form {
+        width: 80%;
+      }
       textarea {
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -47,18 +52,12 @@
 }
 
 .chat-input {
+  box-sizing: border-box;
   font-family: inherit;
-  font-size: 13px;
-
-  width: calc(100% - 100px);
-  height: calc(1em + 4px);
-  min-height: calc(1em + 7px);
-  max-height: calc(6em + 7px);
+  font-size: 14px;
   resize: none;
   overflow: auto;
-
-  padding: 1px;
-  margin: 5px;
+  padding: 0.313em;
 
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -75,4 +74,28 @@
 .direct-message {
   background-color: #555;
   color: #ccc;
+}
+.emoji-mart-search-icon {
+  top: 7px;
+}
+.emoji-mart {
+  position: absolute;
+  top: -225px;
+  right: 36px;
+}
+.emoji-mart-search {
+  button {
+    background-color: transparent;
+    color: #fff;
+    cursor: auto;
+    &:hover,
+    &:focus {
+      background-color: transparent;
+      color: #fff;
+      cursor: auto;
+    }
+  }
+}
+.emoji-mart-scroll {
+  height: 150px;
 }
