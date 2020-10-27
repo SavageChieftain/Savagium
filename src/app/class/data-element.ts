@@ -40,34 +40,43 @@ export class DataElement extends ObjectNode {
 
   getElementsByName(name: string): DataElement[] {
     const children: DataElement[] = []
-    for (const child of this.children) {
+    this.children.forEach((child) => {
       if (child instanceof DataElement) {
-        if (child.getAttribute('name') === name) children.push(child)
+        if (child.getAttribute('name') === name) {
+          children.push(child)
+        }
         Array.prototype.push.apply(children, child.getElementsByName(name))
       }
-    }
+    })
     return children
   }
 
   getElementsByType(type: string): DataElement[] {
     const children: DataElement[] = []
-    for (const child of this.children) {
+    this.children.forEach((child) => {
       if (child instanceof DataElement) {
         if (child.getAttribute('type') === type) children.push(child)
         Array.prototype.push.apply(children, child.getElementsByType(type))
       }
-    }
+    })
     return children
   }
 
   getFirstElementByName(name: string): DataElement {
-    for (const child of this.children) {
+    let result = this.children.find((child) => {
       if (child instanceof DataElement) {
-        if (child.getAttribute('name') === name) return child
-        const match = child.getFirstElementByName(name)
-        if (match) return match
+        return child.getAttribute('name') === name
       }
+      return false
+    }) as DataElement
+    if (!result) {
+      result = this.children.find((child) => {
+        if (child instanceof DataElement) {
+          return child.getFirstElementByName(name)
+        }
+        return false
+      }) as DataElement
     }
-    return null
+    return result
   }
 }
