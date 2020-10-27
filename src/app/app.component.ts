@@ -75,17 +75,19 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     private ngZone: NgZone,
   ) {
     this.ngZone.runOutsideAngular(() => {
-      EventSystem
-      Network
-      FileArchiver.instance.initialize()
-      ImageSharingSystem.instance.initialize()
-      ImageStorage.instance
-      AudioSharingSystem.instance.initialize()
-      AudioStorage.instance
-      ObjectFactory.instance
-      ObjectSerializer.instance
-      ObjectStore.instance
-      ObjectSynchronizer.instance.initialize()
+      return [
+        EventSystem,
+        Network,
+        FileArchiver.instance.initialize(),
+        ImageSharingSystem.instance.initialize(),
+        ImageStorage.instance,
+        AudioSharingSystem.instance.initialize(),
+        AudioStorage.instance,
+        ObjectFactory.instance,
+        ObjectSerializer.instance,
+        ObjectStore.instance,
+        ObjectSynchronizer.instance.initialize(),
+      ]
     })
     this.appConfigService.initialize()
     this.pointerDeviceService.initialize()
