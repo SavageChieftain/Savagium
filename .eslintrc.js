@@ -39,6 +39,11 @@ module.exports = {
          *
          * There are some examples below from the @angular-eslint plugin and ESLint core:
          */
+        'no-console': 'off',
+        'class-methods-use-this': 'off',
+        'no-unused-expressions': 'off',
+        'import/prefer-default-export': 'off',
+        'no-underscore-dangle': [0],
         '@angular-eslint/directive-selector': [
           'error',
           { type: 'attribute', prefix: 'app', style: 'camelCase' },
