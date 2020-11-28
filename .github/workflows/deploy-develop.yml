@@ -23,10 +23,10 @@ jobs:
       - name: Create Config File
         run: mv ./src/assets/config.example.yml ./src/assets/config.yml
 
-      - name: sed
-        run: sed -e 's/#ここにSkywayのAPIKeyを入力してください/${{ secrets.SKYWAY_API_KEY_DEVELOP }}/g' ./src/assets/config.yml
+      - name: Replace Config Setting
+        run: sed -i -e 's/#ここにSkywayのAPIKeyを入力してください/${{ secrets.SKYWAY_API_KEY_DEVELOP }}/g' ./src/assets/config.yml
 
-      - name: Build
+      - name: Build Application
         run: npx ng build --prod
 
       - name: Publish to AWS S3 & CloudFront Cache Clear
