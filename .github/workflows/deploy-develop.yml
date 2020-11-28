@@ -21,10 +21,10 @@ jobs:
         run: npm install
 
       - name: Create Config File
-        run: mv ./src/assets/config.example.yml mv ./src/assets/config.yml
+        run: mv ./src/assets/config.example.yml ./src/assets/config.yml
 
       - name: sed
-        run: sed -e 's/#ここにSkywayのAPIKeyを入力してください/${{ secrets.SKYWAY_API_KEY_DEVELOP }}/g' source.txt
+        run: sed -e 's/#ここにSkywayのAPIKeyを入力してください/${{ secrets.SKYWAY_API_KEY_DEVELOP }}/g' ./src/assets/config.yml
 
       - name: Build
         run: npx ng build --prod
