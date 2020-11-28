@@ -46,4 +46,4 @@ testem.log
 Thumbs.db
 
 # Security files
-src/assets/config.yaml
+src/assets/config.yml
