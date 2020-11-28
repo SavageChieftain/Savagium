@@ -7,15 +7,41 @@ import { EventSystem, Network } from './core/system'
 
 @SyncObject('PeerCursor')
 export class PeerCursor extends GameObject {
+  static myCursor: PeerCursor = null
+
+  private static hash: { [peerId: string]: string } = {}
+
   @SyncVar() peerId = ''
 
   @SyncVar() name = ''
 
   @SyncVar() imageIdentifier = ''
 
-  static myCursor: PeerCursor = null
+  static find(peerId): PeerCursor {
+    const identifier = PeerCursor.hash[peerId]
+    if (identifier != null && ObjectStore.instance.get(identifier))
+      return ObjectStore.instance.get<PeerCursor>(identifier)
+    const cursors = ObjectStore.instance.getObjects<PeerCursor>(PeerCursor)
+    const result = cursors.find((cursor) => {
+      if (cursor.peerId === peerId) {
+        PeerCursor.hash[peerId] = cursor.identifier
+        return cursor
+      }
+      return null
+    })
+    return result
+  }
 
-  private static hash: { [peerId: string]: string } = {}
+  static createMyCursor(): PeerCursor {
+    if (PeerCursor.myCursor) {
+      console.warn('It is already created.')
+      return PeerCursor.myCursor
+    }
+    PeerCursor.myCursor = new PeerCursor()
+    PeerCursor.myCursor.peerId = Network.peerId
+    PeerCursor.myCursor.initialize()
+    return PeerCursor.myCursor
+  }
 
   get isMine(): boolean {
     return PeerCursor.myCursor && PeerCursor.myCursor === this
@@ -42,31 +68,6 @@ export class PeerCursor extends GameObject {
     super.onStoreRemoved()
     EventSystem.unregister(this)
     delete PeerCursor.hash[this.peerId]
-  }
-
-  static find(peerId): PeerCursor {
-    const identifier = PeerCursor.hash[peerId]
-    if (identifier != null && ObjectStore.instance.get(identifier))
-      return ObjectStore.instance.get<PeerCursor>(identifier)
-    const cursors = ObjectStore.instance.getObjects<PeerCursor>(PeerCursor)
-    for (const cursor of cursors) {
-      if (cursor.peerId === peerId) {
-        PeerCursor.hash[peerId] = cursor.identifier
-        return cursor
-      }
-    }
-    return null
-  }
-
-  static createMyCursor(): PeerCursor {
-    if (PeerCursor.myCursor) {
-      console.warn('It is already created.')
-      return PeerCursor.myCursor
-    }
-    PeerCursor.myCursor = new PeerCursor()
-    PeerCursor.myCursor.peerId = Network.peerId
-    PeerCursor.myCursor.initialize()
-    return PeerCursor.myCursor
   }
 
   // override

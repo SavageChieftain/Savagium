@@ -14,74 +14,75 @@ export namespace CanvasUtil {
     height: number,
     resize_canvas?: boolean,
   ) {
-    const width_source = canvas.width
-    const height_source = canvas.height
-    width = Math.round(width)
-    height = Math.round(height)
+    const widthSource = canvas.width
+    const heightSource = canvas.height
+    const localWidth = Math.round(width)
+    const localHeight = Math.round(height)
 
-    const ratio_w = width_source / width
-    const ratio_h = height_source / height
-    const ratio_w_half = Math.ceil(ratio_w / 2)
-    const ratio_h_half = Math.ceil(ratio_h / 2)
+    const ratioW = widthSource / localWidth
+    const ratioH = heightSource / localHeight
+    const ratioWHalf = Math.ceil(ratioW / 2)
+    const ratioHHalf = Math.ceil(ratioH / 2)
 
     const ctx = canvas.getContext('2d')
-    const img = ctx.getImageData(0, 0, width_source, height_source)
-    const img2 = ctx.createImageData(width, height)
+    const img = ctx.getImageData(0, 0, widthSource, heightSource)
+    const img2 = ctx.createImageData(localWidth, localHeight)
     const { data } = img
     const data2 = img2.data
 
-    for (let j = 0; j < height; j++) {
-      for (let i = 0; i < width; i++) {
-        const x2 = (i + j * width) * 4
+    for (let j = 0; j < localHeight; j += 1) {
+      for (let i = 0; i < localWidth; i += 1) {
+        const x2 = (i + j * localWidth) * 4
         let weight = 0
         let weights = 0
-        let weights_alpha = 0
-        let gx_r = 0
-        let gx_g = 0
-        let gx_b = 0
-        let gx_a = 0
-        const center_y = (j + 0.5) * ratio_h
-        const yy_start = Math.floor(j * ratio_h)
-        const yy_stop = Math.ceil((j + 1) * ratio_h)
-        for (let yy = yy_start; yy < yy_stop; yy++) {
-          const dy = Math.abs(center_y - (yy + 0.5)) / ratio_h_half
-          const center_x = (i + 0.5) * ratio_w
+        let weightsAlpha = 0
+        let gxR = 0
+        let gxG = 0
+        let gxB = 0
+        let gxA = 0
+        const centerY = (j + 0.5) * ratioH
+        const yyStart = Math.floor(j * ratioH)
+        const yyStop = Math.ceil((j + 1) * ratioH)
+        for (let yy = yyStart; yy < yyStop; yy += 1) {
+          const dy = Math.abs(centerY - (yy + 0.5)) / ratioHHalf
+          const centerX = (i + 0.5) * ratioW
           const w0 = dy * dy // pre-calc part of w
-          const xx_start = Math.floor(i * ratio_w)
-          const xx_stop = Math.ceil((i + 1) * ratio_w)
-          for (let xx = xx_start; xx < xx_stop; xx++) {
-            const dx = Math.abs(center_x - (xx + 0.5)) / ratio_w_half
+          const xxStart = Math.floor(i * ratioW)
+          const xxStop = Math.ceil((i + 1) * ratioW)
+          for (let xx = xxStart; xx < xxStop; xx += 1) {
+            const dx = Math.abs(centerX - (xx + 0.5)) / ratioWHalf
             const w = Math.sqrt(w0 + dx * dx)
             if (w >= 1) {
               // pixel too far
+              // eslint-disable-next-line no-continue
               continue
             }
             // hermite filter
             weight = 2 * w * w * w - 3 * w * w + 1
-            const pos_x = 4 * (xx + yy * width_source)
+            const posX = 4 * (xx + yy * widthSource)
             // alpha
-            gx_a += weight * data[pos_x + 3]
-            weights_alpha += weight
+            gxA += weight * data[posX + 3]
+            weightsAlpha += weight
             // colors
-            if (data[pos_x + 3] < 255) weight = (weight * data[pos_x + 3]) / 250
-            gx_r += weight * data[pos_x]
-            gx_g += weight * data[pos_x + 1]
-            gx_b += weight * data[pos_x + 2]
+            if (data[posX + 3] < 255) weight = (weight * data[posX + 3]) / 250
+            gxR += weight * data[posX]
+            gxG += weight * data[posX + 1]
+            gxB += weight * data[posX + 2]
             weights += weight
           }
         }
-        data2[x2] = gx_r / weights
-        data2[x2 + 1] = gx_g / weights
-        data2[x2 + 2] = gx_b / weights
-        data2[x2 + 3] = gx_a / weights_alpha
+        data2[x2] = gxR / weights
+        data2[x2 + 1] = gxG / weights
+        data2[x2 + 2] = gxB / weights
+        data2[x2 + 3] = gxA / weightsAlpha
       }
     }
     // clear and resize canvas
     if (resize_canvas === true) {
-      canvas.width = width
-      canvas.height = height
+      canvas.width = localWidth
+      canvas.height = localHeight
     } else {
-      ctx.clearRect(0, 0, width_source, height_source)
+      ctx.clearRect(0, 0, widthSource, heightSource)
     }
 
     // draw

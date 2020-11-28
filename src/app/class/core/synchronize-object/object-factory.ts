@@ -1,6 +1,6 @@
+// eslint-disable-next-line import/no-cycle
 import { GameObject } from './game-object'
 
-export declare var Type: FunctionConstructor
 export interface Type<T> extends Function {
   new (...args: any[]): T
 }
@@ -22,27 +22,29 @@ export class ObjectFactory {
   }
 
   register<T extends GameObject>(constructor: Type<T>, alias?: string) {
-    if (!alias) alias = constructor.name || constructor.toString().match(/function\s*([^(]*)\(/)[1]
-    if (this.constructorMap.has(alias)) {
-      console.error(`その alias<${alias}> はすでに割り当て済みじゃねー？`)
+    let localAlias = alias
+    if (!localAlias)
+      localAlias = constructor.name || constructor.toString().match(/function\s*([^(]*)\(/)[1]
+    if (this.constructorMap.has(localAlias)) {
+      console.error(`その alias<${localAlias}> はすでに割り当て済みじゃねー？`)
       return
     }
     if (this.aliasMap.has(constructor)) {
       console.error('その constructor はすでに登録済みじゃねー？', constructor)
       return
     }
-    console.log(`addGameObjectFactory -> ${alias}`)
+    console.log(`addGameObjectFactory -> ${localAlias}`)
     this.constructorMap.set(alias, constructor)
     this.aliasMap.set(constructor, alias)
   }
 
   create<T extends GameObject>(alias: string, identifer?: string): T {
-    const classConstructor = this.constructorMap.get(alias)
-    if (!classConstructor) {
+    const ClassConstructor = this.constructorMap.get(alias)
+    if (!ClassConstructor) {
       console.error(`${alias}という名のＧameObjectクラスは定義されていません`)
       return null
     }
-    const gameObject: GameObject = new classConstructor(identifer)
+    const gameObject: GameObject = new ClassConstructor(identifer)
     return <T>gameObject
   }
 

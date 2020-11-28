@@ -18,10 +18,9 @@ export class GameCharacter extends TabletopObject {
   }
 
   get chatPalette(): ChatPalette {
-    for (const child of this.children) {
-      if (child instanceof ChatPalette) return child
-    }
-    return null
+    return this.children.find((child) => {
+      return child instanceof ChatPalette
+    }) as ChatPalette
   }
 
   static create(name: string, size: number, imageIdentifier: string): GameCharacter {
@@ -114,15 +113,12 @@ export class GameCharacter extends TabletopObject {
     testElement.appendChild(DataElement.create('自動', '治癒適正', {}, `自動${this.identifier}`))
 
     const domParser: DOMParser = new DOMParser()
-    const gameCharacterXMLDocument: Document = domParser.parseFromString(
-      this.rootDataElement.toXml(),
-      'application/xml',
-    )
+    domParser.parseFromString(this.rootDataElement.toXml(), 'application/xml')
 
     const palette: ChatPalette = new ChatPalette(`ChatPalette_${this.identifier}`)
     palette.setPalette(`チャットパレット入力例：
 2d6+1 ダイスロール
-１ｄ２０＋{敏捷}＋｛格闘｝　{name}の格闘！
+１ｄ２０＋{敏捷}＋｛格闘｝ {name}の格闘！
 //敏捷=10+{敏捷A}
 //敏捷A=10
 //格闘＝１`)

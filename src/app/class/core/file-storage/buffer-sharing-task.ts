@@ -53,12 +53,14 @@ export class BufferSharingTask<T> {
     this.data = data
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   static createSendTask<T>(identifier: string, sendTo: string, data?: T): BufferSharingTask<T> {
     const task = new BufferSharingTask(identifier, sendTo, data)
     task.onstart = () => task.initializeSend()
     return task
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   static createReceiveTask<T>(identifier: string): BufferSharingTask<T> {
     const task = new BufferSharingTask<T>(identifier)
     task.onstart = () => task.initializeReceive()
@@ -114,7 +116,10 @@ export class BufferSharingTask<T> {
     if (this.timeoutTimer) this.timeoutTimer.clear()
     this.sendChankTimer = null
     this.timeoutTimer = null
-    this.onprogress = this.onfinish = this.ontimeout = this.oncancel = null
+    this.oncancel = null
+    this.ontimeout = null
+    this.onfinish = null
+    this.onprogress = null
   }
 
   private initializeSend() {
@@ -142,7 +147,8 @@ export class BufferSharingTask<T> {
         console.warn('送信キャンセル', this, event.sendFrom)
         this._cancel()
       })
-    this.sentChankIndex = this.completedChankIndex = 0
+    this.completedChankIndex = 0
+    this.sentChankIndex = 0
     setZeroTimeout(() => this.sendChank(0))
   }
 
@@ -176,7 +182,7 @@ export class BufferSharingTask<T> {
           console.log(`already received. [${event.data.index}] <${this.identifier}>`)
           return
         }
-        this.chankReceiveCount++
+        this.chankReceiveCount += 1
         this.chanks[event.data.index] = event.data.chank
         this.progress(event.data.index, event.data.length)
         if (this.chanks.length <= this.chankReceiveCount) {
@@ -201,9 +207,9 @@ export class BufferSharingTask<T> {
     console.log('バッファ受信完了', this.identifier)
 
     let sumLength = 0
-    for (const chank of this.chanks) {
+    this.chanks.forEach((chank) => {
       sumLength += chank.byteLength
-    }
+    })
 
     const time = performance.now() - this.startTime
     const rate = sumLength / 1024 / 1024 / (time / 1000)
@@ -215,11 +221,10 @@ export class BufferSharingTask<T> {
 
     const uint8Array = new Uint8Array(sumLength)
     let pos = 0
-
-    for (const chank of this.chanks) {
+    this.chanks.forEach((chank) => {
       uint8Array.set(chank, pos)
       pos += chank.byteLength
-    }
+    })
 
     this.data = MessagePack.decode(uint8Array)
     this.finish()

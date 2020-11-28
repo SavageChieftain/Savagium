@@ -22,75 +22,6 @@ export class DiceBot extends GameObject {
 
   public static diceBotInfos: Info[] = BCDice.infoList
 
-  // GameObject Lifecycle
-  onStoreAdded() {
-    super.onStoreAdded()
-    EventSystem.register(this).on('SEND_MESSAGE', async (event) => {
-      const chatMessage = ObjectStore.instance.get<ChatMessage>(event.data.messageIdentifier)
-      if (!chatMessage || !chatMessage.isSendFromSelf || chatMessage.isSystem) return
-
-      const text: string = StringUtil.toHalfWidth(chatMessage.text)
-      const gameType: string = chatMessage.tag
-
-      try {
-        const regArray = /^((\d+)?\s+)?([^\s]*)?/gi.exec(text)
-        const repeat: number = regArray[2] != null ? Number(regArray[2]) : 1
-        const rollText: string = regArray[3] != null ? regArray[3] : text
-
-        const finalResult: DiceRollResult = { result: '', isSecret: false }
-        for (let i = 0; i < repeat && i < 32; i++) {
-          const rollResult = await DiceBot.diceRollAsync(rollText, gameType)
-          if (rollResult.result.length < 1) break
-
-          finalResult.result += rollResult.result
-          finalResult.isSecret = finalResult.isSecret || rollResult.isSecret
-          if (repeat > 1) finalResult.result += ` #${i + 1}`
-        }
-        this.sendResultMessage(finalResult, chatMessage)
-      } catch (e) {
-        console.error(e)
-      }
-    })
-  }
-
-  // GameObject Lifecycle
-  onStoreRemoved() {
-    super.onStoreRemoved()
-    EventSystem.unregister(this)
-  }
-
-  private sendResultMessage(rollResult: DiceRollResult, originalMessage: ChatMessage) {
-    let { result } = rollResult
-    const { isSecret } = rollResult
-
-    if (result.length < 1) return
-
-    result = result.replace(/[＞]/g, (s) => '→').trim()
-
-    const diceBotMessage: ChatMessageContext = {
-      identifier: '',
-      tabIdentifier: originalMessage.tabIdentifier,
-      originFrom: originalMessage.from,
-      from: 'System-BCDice',
-      timestamp: originalMessage.timestamp + 1,
-      imageIdentifier: '',
-      tag: isSecret ? 'system secret' : 'system',
-      name: isSecret
-        ? `<Secret-BCDice：${originalMessage.name}>`
-        : `<BCDice：${originalMessage.name}>`,
-      text: result,
-    }
-
-    if (originalMessage.to != null && originalMessage.to.length > 0) {
-      diceBotMessage.to = originalMessage.to
-      if (originalMessage.to.indexOf(originalMessage.from) < 0) {
-        diceBotMessage.to += ` ${originalMessage.from}`
-      }
-    }
-    const chatTab = ObjectStore.instance.get<ChatTab>(originalMessage.tabIdentifier)
-    if (chatTab) chatTab.addMessage(diceBotMessage)
-  }
-
   static diceRollAsync(message: string, gameType: string): Promise<DiceRollResult> {
     DiceBot.queue.add(DiceBot.loadDiceBotAsync(gameType))
     return DiceBot.queue.add(() => {
@@ -124,7 +55,7 @@ export class DiceBot extends GameObject {
   }
 
   static loadDiceBotAsync(gameType: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve) => {
       console.log('loadDiceBotAsync')
 
       if ((!gameType && gameType.length < 1) || DiceBot.loadedDiceBots[gameType]) {
@@ -147,5 +78,75 @@ export class DiceBot extends GameObject {
         resolve()
       })
     })
+  }
+
+  // GameObject Lifecycle
+  onStoreAdded() {
+    super.onStoreAdded()
+    EventSystem.register(this).on('SEND_MESSAGE', async (event) => {
+      const chatMessage = ObjectStore.instance.get<ChatMessage>(event.data.messageIdentifier)
+      if (!chatMessage || !chatMessage.isSendFromSelf || chatMessage.isSystem) return
+
+      const text: string = StringUtil.toHalfWidth(chatMessage.text)
+      const gameType: string = chatMessage.tag
+
+      try {
+        const regArray = /^((\d+)?\s+)?([^\s]*)?/gi.exec(text)
+        const repeat: number = regArray[2] != null ? Number(regArray[2]) : 1
+        const rollText: string = regArray[3] != null ? regArray[3] : text
+
+        const finalResult: DiceRollResult = { result: '', isSecret: false }
+        for (let i = 0; i < repeat && i < 32; i += 1) {
+          // eslint-disable-next-line no-await-in-loop
+          const rollResult = await DiceBot.diceRollAsync(rollText, gameType)
+          if (rollResult.result.length < 1) break
+
+          finalResult.result += rollResult.result
+          finalResult.isSecret = finalResult.isSecret || rollResult.isSecret
+          if (repeat > 1) finalResult.result += ` #${i + 1}`
+        }
+        this.sendResultMessage(finalResult, chatMessage)
+      } catch (e) {
+        console.error(e)
+      }
+    })
+  }
+
+  // GameObject Lifecycle
+  onStoreRemoved() {
+    super.onStoreRemoved()
+    EventSystem.unregister(this)
+  }
+
+  private sendResultMessage(rollResult: DiceRollResult, originalMessage: ChatMessage) {
+    let { result } = rollResult
+    const { isSecret } = rollResult
+
+    if (result.length < 1) return
+
+    result = result.replace(/[＞]/g, () => '→').trim()
+
+    const diceBotMessage: ChatMessageContext = {
+      identifier: '',
+      tabIdentifier: originalMessage.tabIdentifier,
+      originFrom: originalMessage.from,
+      from: 'System-BCDice',
+      timestamp: originalMessage.timestamp + 1,
+      imageIdentifier: '',
+      tag: isSecret ? 'system secret' : 'system',
+      name: isSecret
+        ? `<Secret-BCDice：${originalMessage.name}>`
+        : `<BCDice：${originalMessage.name}>`,
+      text: result,
+    }
+
+    if (originalMessage.to != null && originalMessage.to.length > 0) {
+      diceBotMessage.to = originalMessage.to
+      if (originalMessage.to.indexOf(originalMessage.from) < 0) {
+        diceBotMessage.to += ` ${originalMessage.from}`
+      }
+    }
+    const chatTab = ObjectStore.instance.get<ChatTab>(originalMessage.tabIdentifier)
+    if (chatTab) chatTab.addMessage(diceBotMessage)
   }
 }

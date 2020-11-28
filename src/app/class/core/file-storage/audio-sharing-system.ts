@@ -20,8 +20,6 @@ export class AudioSharingSystem {
 
   private maxReceiveTask = 4
 
-  private constructor() {}
-
   initialize() {
     console.log('AudioSharingSystem ready...')
     this.destroy()
@@ -42,7 +40,7 @@ export class AudioSharingSystem {
           'SYNCHRONIZE_AUDIO_LIST active tasks ',
           this.sendTaskMap.size + this.receiveTaskMap.size,
         )
-        for (const item of otherCatalog) {
+        otherCatalog.forEach((item) => {
           let audio: AudioFile = AudioStorage.instance.get(item.identifier)
           if (audio === null) {
             audio = AudioFile.createEmpty(item.identifier)
@@ -51,7 +49,7 @@ export class AudioSharingSystem {
           if (audio.state < AudioState.COMPLETE && !this.receiveTaskMap.has(item.identifier)) {
             request.push({ identifier: item.identifier, state: audio.state })
           }
-        }
+        })
 
         // Peer切断時などのエッジケースに対応する
         if (
@@ -73,15 +71,15 @@ export class AudioSharingSystem {
 
         const request: CatalogItem[] = event.data.identifiers
         const randomRequest: CatalogItem[] = []
-
-        for (const item of request) {
+        request.forEach((item) => {
           const audio: AudioFile = AudioStorage.instance.get(item.identifier)
-          if (audio && item.state < audio.state)
+          if (audio && item.state < audio.state) {
             randomRequest.push({
               identifier: item.identifier,
               state: item.state,
             })
-        }
+          }
+        })
 
         if (
           this.isLimitSendTask() === false &&
@@ -99,14 +97,12 @@ export class AudioSharingSystem {
           const { candidatePeers } = event.data
           const index = candidatePeers.indexOf(Network.peerId)
           if (index > -1) candidatePeers.splice(index, 1)
-
-          for (const peer of candidatePeers) {
+          candidatePeers.forEach((peer) => {
             console.log(
               `REQUEST_AUDIO_RESOURE AudioStorageService Relay!!! ${peer} -> ${event.data.identifiers}`,
             )
             EventSystem.call(event, peer)
-            return
-          }
+          })
           console.log(
             `REQUEST_FILE_RESOURE AudioStorageService あぶれた...${event.data.receiver}`,
             randomRequest.length,
@@ -116,10 +112,10 @@ export class AudioSharingSystem {
       .on('UPDATE_AUDIO_RESOURE', (event) => {
         const updateAudios: AudioFileContext[] = event.data
         console.log(`UPDATE_AUDIO_RESOURE AudioStorageService ${event.sendFrom} -> `, updateAudios)
-        for (const context of updateAudios) {
+        updateAudios.forEach((context) => {
           if (context.blob) context.blob = new Blob([context.blob], { type: context.type })
           AudioStorage.instance.add(context)
-        }
+        })
       })
       .on('START_AUDIO_TRANSMISSION', (event) => {
         console.log(`START_AUDIO_TRANSMISSION ${event.data.fileIdentifier}`)
@@ -172,13 +168,13 @@ export class AudioSharingSystem {
     const task = BufferSharingTask.createReceiveTask<AudioFileContext>(identifier)
     this.receiveTaskMap.set(identifier, task)
 
-    task.onprogress = (task, loded, total) => {
+    task.onprogress = (localTask, loded, total) => {
       const context = audio.toContext()
       context.name = `${((loded * 100) / total).toFixed(1)}%`
       audio.apply(context)
     }
-    task.onfinish = (task, data) => {
-      this.stopReceiveTask(task.identifier)
+    task.onfinish = (localTask, data) => {
+      this.stopReceiveTask(localTask.identifier)
       if (data) EventSystem.trigger('UPDATE_AUDIO_RESOURE', [data])
       AudioStorage.instance.synchronize()
     }
@@ -231,9 +227,9 @@ export class AudioSharingSystem {
   }
 
   private existsSendTask(peer: string): boolean {
-    for (const task of this.sendTaskMap.values()) {
-      if (task && task.sendTo === peer) return true
-    }
-    return false
+    const result = [...this.sendTaskMap.values()].find((task) => {
+      return task && task.sendTo === peer
+    })
+    return Boolean(result)
   }
 }

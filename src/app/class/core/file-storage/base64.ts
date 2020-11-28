@@ -11,7 +11,7 @@ export namespace Base64 {
     const mime = tmp[0].split(':')[1].split(';')[0]
     if (mime.length < 1) return null
     const arr = new Uint8Array(data.length)
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i += 1) {
       arr[i] = data.charCodeAt(i)
     }
     const blob = new Blob([arr], { type: mime })
@@ -21,10 +21,13 @@ export namespace Base64 {
   export function toBase64Async(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = (event) => {
+      reader.onload = () => {
         resolve(reader.result as string)
       }
-      reader.onabort = reader.onerror = () => {
+      reader.onerror = () => {
+        reject()
+      }
+      reader.onabort = () => {
         reject()
       }
       reader.readAsDataURL(blob)

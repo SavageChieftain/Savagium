@@ -32,9 +32,9 @@ export class Room extends GameObject implements InnerXml {
       }),
     )
     objects = objects.concat(ObjectStore.instance.getObjects(DiceSymbol))
-    for (const object of objects) {
+    objects.forEach((object) => {
       xml += object.toXml()
-    }
+    })
     return xml
   }
 
@@ -48,10 +48,10 @@ export class Room extends GameObject implements InnerXml {
     objects = objects.concat(ObjectStore.instance.getObjects(CardStack))
     objects = objects.concat(ObjectStore.instance.getObjects(Card))
     objects = objects.concat(ObjectStore.instance.getObjects(DiceSymbol))
-    for (const object of objects) {
+    objects.forEach((object) => {
       object.destroy()
-    }
-    for (let i = 0; i < element.children.length; i++) {
+    })
+    for (let i = 0; i < element.children.length; i += 1) {
       ObjectSerializer.instance.parseXml(element.children[i])
     }
   }

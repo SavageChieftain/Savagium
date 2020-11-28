@@ -21,6 +21,7 @@ export class ObjectSynchronizer {
 
   private tasks: SynchronizeTask[] = []
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
   initialize() {
@@ -39,13 +40,13 @@ export class ObjectSynchronizer {
         if (event.isSendFromSelf) return
         console.log(`SYNCHRONIZE_GAME_OBJECT ${event.sendFrom}`)
         const catalog: CatalogItem[] = event.data
-        for (const item of catalog) {
+        catalog.forEach((item) => {
           if (ObjectStore.instance.isDeleted(item.identifier)) {
             EventSystem.call('DELETE_GAME_OBJECT', { identifier: item.identifier }, event.sendFrom)
           } else {
             this.addRequestMap(item, event.sendFrom)
           }
-        }
+        })
         this.synchronize()
       })
       .on('REQUEST_GAME_OBJECT', (event) => {
@@ -148,13 +149,16 @@ export class ObjectSynchronizer {
     const targetPeerIdTasks = this.peerMap.get(targetPeerId)
     if (targetPeerIdTasks) targetPeerIdTasks.push(task)
 
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     task.onfinish = (task) => {
       this.tasks.splice(this.tasks.indexOf(task), 1)
+      // eslint-disable-next-line @typescript-eslint/no-shadow
       const targetPeerIdTasks = this.peerMap.get(targetPeerId)
       if (targetPeerIdTasks) targetPeerIdTasks.splice(targetPeerIdTasks.indexOf(task), 1)
       this.synchronize()
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     task.ontimeout = (task, remainedRequests) => {
       console.log('GameObject synchronize タイムアウト')
       remainedRequests.forEach((request) => this.requestMap.set(request.identifier, request))
@@ -163,16 +167,14 @@ export class ObjectSynchronizer {
 
   private makeRequestList(targetPeerId: PeerId, maxRequest: number = 32): SynchronizeRequest[] {
     const requests: SynchronizeRequest[] = []
+    this.requestMap.forEach((request, identifier) => {
+      if (maxRequest > requests.length && request.holderIds.includes(targetPeerId)) {
+        const gameObject = ObjectStore.instance.get(request.identifier)
+        if (!gameObject || gameObject.version < request.version) requests.push(request)
 
-    for (const [identifier, request] of this.requestMap) {
-      if (maxRequest <= requests.length) break
-      if (!request.holderIds.includes(targetPeerId)) continue
-
-      const gameObject = ObjectStore.instance.get(request.identifier)
-      if (!gameObject || gameObject.version < request.version) requests.push(request)
-
-      this.requestMap.delete(identifier)
-    }
+        this.requestMap.delete(identifier)
+      }
+    })
     return requests
   }
 
@@ -181,18 +183,17 @@ export class ObjectSynchronizer {
     let selectPeerId: PeerId = null
     const { peerContexts } = Network
 
-    for (let i = peerContexts.length - 1; i >= 0; i--) {
+    for (let i = peerContexts.length - 1; i >= 0; i -= 1) {
       const rand = Math.floor(Math.random() * (i + 1))
       ;[peerContexts[i], peerContexts[rand]] = [peerContexts[rand], peerContexts[i]]
     }
-
-    for (const peerContext of peerContexts) {
+    peerContexts.forEach((peerContext) => {
       const tasks = this.peerMap.get(peerContext.fullstring)
       if (peerContext.isOpen && tasks && tasks.length < min) {
         min = tasks.length
         selectPeerId = peerContext.fullstring
       }
-    }
+    })
     return selectPeerId
   }
 }

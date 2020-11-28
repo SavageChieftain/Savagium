@@ -24,6 +24,8 @@ export interface ThumbnailContext {
 }
 
 export class ImageFile {
+  static Empty: ImageFile = ImageFile.createEmpty('null')
+
   private context: ImageContext = {
     identifier: '',
     name: '',
@@ -35,6 +37,42 @@ export class ImageFile {
       type: '',
       url: '',
     },
+  }
+
+  private static createThumbnailAsync(context: ImageContext): Promise<ThumbnailContext> {
+    return new Promise((resolve, reject) => {
+      const canvas: HTMLCanvasElement = document.createElement('canvas')
+      const render: CanvasRenderingContext2D = canvas.getContext('2d')
+      const image: HTMLImageElement = new Image()
+      image.onload = () => {
+        let scale: number = 128 / (image.width < image.height ? image.height : image.width)
+        scale = scale < 1 ? scale : 1.0
+        const dstWidth = image.width * scale
+        const dstHeight = image.height * scale
+        canvas.width = image.width // dstWidth;
+        canvas.height = image.height // dstHeight;
+        // render.drawImage(image, 0, 0, image.width, image.height, 0, 0, dstWidth, dstHeight);
+
+        render.drawImage(image, 0, 0)
+        CanvasUtil.resize(canvas, dstWidth, dstHeight, true)
+
+        canvas.toBlob((blob) => {
+          const thumbnail: ThumbnailContext = {
+            type: blob.type,
+            blob,
+            url: window.URL.createObjectURL(blob),
+          }
+          resolve(thumbnail)
+        }, context.blob.type)
+      }
+      image.onabort = () => {
+        reject()
+      }
+      image.onerror = () => {
+        reject()
+      }
+      image.src = context.url
+    })
   }
 
   get identifier(): string {
@@ -63,8 +101,6 @@ export class ImageFile {
     if (this.blob === this.thumbnail.blob) return ImageState.THUMBNAIL
     return ImageState.COMPLETE
   }
-
-  private constructor() {}
 
   static createEmpty(identifier: string): ImageFile {
     const imageFile = new ImageFile()
@@ -97,6 +133,7 @@ export class ImageFile {
     if (arg instanceof Blob) {
       return await ImageFile._createAsync(arg)
     }
+    return undefined
   }
 
   private static async _createAsync(blob: Blob, name?: string): Promise<ImageFile> {
@@ -111,7 +148,7 @@ export class ImageFile {
     try {
       imageFile.context.thumbnail = await ImageFile.createThumbnailAsync(imageFile.context)
     } catch (e) {
-      throw e
+      console.log(e)
     }
 
     if (imageFile.context.name != null) imageFile.context.name = imageFile.context.identifier
@@ -171,39 +208,4 @@ export class ImageFile {
     window.URL.revokeObjectURL(this.context.url)
     window.URL.revokeObjectURL(this.context.thumbnail.url)
   }
-
-  private static createThumbnailAsync(context: ImageContext): Promise<ThumbnailContext> {
-    return new Promise((resolve, reject) => {
-      const canvas: HTMLCanvasElement = document.createElement('canvas')
-      const render: CanvasRenderingContext2D = canvas.getContext('2d')
-      const image: HTMLImageElement = new Image()
-      image.onload = (event) => {
-        let scale: number = 128 / (image.width < image.height ? image.height : image.width)
-        scale = scale < 1 ? scale : 1.0
-        const dstWidth = image.width * scale
-        const dstHeight = image.height * scale
-        canvas.width = image.width // dstWidth;
-        canvas.height = image.height // dstHeight;
-        // render.drawImage(image, 0, 0, image.width, image.height, 0, 0, dstWidth, dstHeight);
-
-        render.drawImage(image, 0, 0)
-        CanvasUtil.resize(canvas, dstWidth, dstHeight, true)
-
-        canvas.toBlob((blob) => {
-          const thumbnail: ThumbnailContext = {
-            type: blob.type,
-            blob,
-            url: window.URL.createObjectURL(blob),
-          }
-          resolve(thumbnail)
-        }, context.blob.type)
-      }
-      image.onabort = image.onerror = () => {
-        reject()
-      }
-      image.src = context.url
-    })
-  }
-
-  static Empty: ImageFile = ImageFile.createEmpty('null')
 }

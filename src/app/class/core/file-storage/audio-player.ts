@@ -16,15 +16,130 @@ declare global {
 type AudioCache = { url: string; blob: Blob }
 
 export class AudioPlayer {
+  private static cacheMap: Map<string, AudioCache> = new Map()
+
+  private static _volume = 0.5
+
+  private static _auditionVolume = 0.5
+
   private static _audioContext: AudioContext
+
+  private static _masterGainNode: GainNode
+
+  private static _auditionGainNode: GainNode
+
+  private _audioElm: HTMLAudioElement
+
+  private _mediaElementSource: MediaElementAudioSourceNode
+
+  audio: AudioFile
+
+  volumeType: VolumeType = VolumeType.MASTER
+
+  private static async playBufferAsync(audio: AudioFile, volume: number = 1.0) {
+    const source = await AudioPlayer.createBufferSourceAsync(audio)
+    if (!source) return
+
+    const gain = AudioPlayer.audioContext.createGain()
+    gain.gain.setValueAtTime(volume, AudioPlayer.audioContext.currentTime)
+
+    gain.connect(AudioPlayer.rootNode)
+    source.connect(gain)
+
+    source.onended = () => {
+      source.stop()
+      source.disconnect()
+      gain.disconnect()
+      source.buffer = null
+    }
+
+    source.start()
+  }
+
+  private static async createBufferSourceAsync(audio: AudioFile): Promise<AudioBufferSourceNode> {
+    if (!audio) return null
+    try {
+      let { blob } = audio
+      if (audio.state === AudioState.URL) {
+        if (AudioPlayer.cacheMap.has(audio.identifier)) {
+          blob = AudioPlayer.cacheMap.get(audio.identifier).blob
+        } else {
+          const cache = await AudioPlayer.createCacheAsync(audio)
+          blob = cache && cache.blob ? cache.blob : null
+        }
+      }
+      if (!blob) return null
+      const decodedData = await this.decodeAudioDataAsync(blob)
+      const source = AudioPlayer.audioContext.createBufferSource()
+      source.buffer = decodedData
+      return source
+    } catch (reason) {
+      console.warn(reason)
+      return null
+    }
+  }
+
+  private static async decodeAudioDataAsync(blob: Blob): Promise<AudioBuffer> {
+    const arrayBufferResult = await FileReaderUtil.readAsArrayBufferAsync(blob)
+    return new Promise((resolve, reject) => {
+      AudioPlayer.audioContext.decodeAudioData(
+        arrayBufferResult,
+        (decodedData) => resolve(decodedData),
+        (error) => reject(error),
+      )
+    })
+  }
+
+  private static async getBlobAsync(audio: AudioFile): Promise<Blob> {
+    if (audio.blob) return audio.blob
+    if (audio.url.length < 1) throw new Error('えっ なにそれ怖い')
+
+    try {
+      const response = await fetch(audio.url)
+      if (!response.ok) throw new Error('Network response was not ok.')
+      const blob = await response.blob()
+      return blob
+    } catch (error) {
+      console.warn('There has been a problem with your fetch operation: ', error.message)
+      throw error
+    }
+  }
+
+  private static async createCacheAsync(audio: AudioFile): Promise<AudioCache> {
+    const cache = { url: audio.url, blob: null }
+    try {
+      cache.blob = await AudioPlayer.getBlobAsync(audio)
+    } catch (e) {
+      console.error(e)
+      return cache
+    }
+
+    if (AudioPlayer.cacheMap.has(audio.identifier)) {
+      return AudioPlayer.cacheMap.get(audio.identifier)
+    }
+
+    cache.url = URL.createObjectURL(cache.blob)
+    AudioPlayer.cacheMap.set(audio.identifier, cache)
+    return cache
+  }
+
+  static resumeAudioContext() {
+    AudioPlayer.audioContext.resume()
+    const callback = () => {
+      AudioPlayer.audioContext.resume()
+      document.removeEventListener('touchstart', callback, true)
+      document.removeEventListener('mousedown', callback, true)
+      console.log('resumeAudioContext')
+    }
+    document.addEventListener('touchstart', callback, true)
+    document.addEventListener('mousedown', callback, true)
+  }
 
   static get audioContext(): AudioContext {
     if (!AudioPlayer._audioContext)
       AudioPlayer._audioContext = new (window.AudioContext || window.webkitAudioContext)()
     return AudioPlayer._audioContext
   }
-
-  private static _volume = 0.5
 
   static get volume(): number {
     return AudioPlayer._volume
@@ -39,8 +154,6 @@ export class AudioPlayer {
     )
   }
 
-  private static _auditionVolume = 0.5
-
   static get auditionVolume(): number {
     return AudioPlayer._auditionVolume
   }
@@ -54,8 +167,6 @@ export class AudioPlayer {
     )
   }
 
-  private static _masterGainNode: GainNode
-
   private static get masterGainNode(): GainNode {
     if (!AudioPlayer._masterGainNode) {
       const masterGain = AudioPlayer.audioContext.createGain()
@@ -65,8 +176,6 @@ export class AudioPlayer {
     }
     return AudioPlayer._masterGainNode
   }
-
-  private static _auditionGainNode: GainNode
 
   private static get auditionGainNode(): GainNode {
     if (!AudioPlayer._auditionGainNode) {
@@ -89,8 +198,6 @@ export class AudioPlayer {
     return AudioPlayer.auditionGainNode
   }
 
-  private _audioElm: HTMLAudioElement
-
   private get audioElm(): HTMLAudioElement {
     if (!this._audioElm) {
       this._audioElm = new Audio()
@@ -105,17 +212,11 @@ export class AudioPlayer {
     return this._audioElm
   }
 
-  private _mediaElementSource: MediaElementAudioSourceNode
-
   private get mediaElementSource(): MediaElementAudioSourceNode {
     if (!this._mediaElementSource)
       this._mediaElementSource = AudioPlayer.audioContext.createMediaElementSource(this.audioElm)
     return this._mediaElementSource
   }
-
-  audio: AudioFile
-
-  volumeType: VolumeType = VolumeType.MASTER
 
   get volume(): number {
     return this.audioElm.volume
@@ -136,8 +237,6 @@ export class AudioPlayer {
   get paused(): boolean {
     return this.audioElm.paused
   }
-
-  private static cacheMap: Map<string, AudioCache> = new Map()
 
   constructor(audio?: AudioFile) {
     this.audio = audio
@@ -190,103 +289,5 @@ export class AudioPlayer {
       default:
         return AudioPlayer.rootNode
     }
-  }
-
-  private static async playBufferAsync(audio: AudioFile, volume: number = 1.0) {
-    const source = await AudioPlayer.createBufferSourceAsync(audio)
-    if (!source) return
-
-    const gain = AudioPlayer.audioContext.createGain()
-    gain.gain.setValueAtTime(volume, AudioPlayer.audioContext.currentTime)
-
-    gain.connect(AudioPlayer.rootNode)
-    source.connect(gain)
-
-    source.onended = () => {
-      source.stop()
-      source.disconnect()
-      gain.disconnect()
-      source.buffer = null
-    }
-
-    source.start()
-  }
-
-  private static async createBufferSourceAsync(audio: AudioFile): Promise<AudioBufferSourceNode> {
-    if (!audio) return null
-    try {
-      let { blob } = audio
-      if (audio.state === AudioState.URL) {
-        if (AudioPlayer.cacheMap.has(audio.identifier)) {
-          blob = AudioPlayer.cacheMap.get(audio.identifier).blob
-        } else {
-          const cache = await AudioPlayer.createCacheAsync(audio)
-          blob = cache && cache.blob ? cache.blob : null
-        }
-      }
-      if (!blob) return null
-      const decodedData = await this.decodeAudioDataAsync(blob)
-      const source = AudioPlayer.audioContext.createBufferSource()
-      source.buffer = decodedData
-      return source
-    } catch (reason) {
-      console.warn(reason)
-      return null
-    }
-  }
-
-  private static decodeAudioDataAsync(blob: Blob): Promise<AudioBuffer> {
-    return new Promise(async (resolve, reject) => {
-      AudioPlayer.audioContext.decodeAudioData(
-        await FileReaderUtil.readAsArrayBufferAsync(blob),
-        (decodedData) => resolve(decodedData),
-        (error) => reject(error),
-      )
-    })
-  }
-
-  private static async getBlobAsync(audio: AudioFile): Promise<Blob> {
-    if (audio.blob) return audio.blob
-    if (audio.url.length < 1) throw new Error('えっ なにそれ怖い')
-
-    try {
-      const response = await fetch(audio.url)
-      if (!response.ok) throw new Error('Network response was not ok.')
-      const blob = await response.blob()
-      return blob
-    } catch (error) {
-      console.warn('There has been a problem with your fetch operation: ', error.message)
-      throw error
-    }
-  }
-
-  private static async createCacheAsync(audio: AudioFile): Promise<AudioCache> {
-    const cache = { url: audio.url, blob: null }
-    try {
-      cache.blob = await AudioPlayer.getBlobAsync(audio)
-    } catch (e) {
-      console.error(e)
-      return cache
-    }
-
-    if (AudioPlayer.cacheMap.has(audio.identifier)) {
-      return AudioPlayer.cacheMap.get(audio.identifier)
-    }
-
-    cache.url = URL.createObjectURL(cache.blob)
-    AudioPlayer.cacheMap.set(audio.identifier, cache)
-    return cache
-  }
-
-  static resumeAudioContext() {
-    AudioPlayer.audioContext.resume()
-    const callback = () => {
-      AudioPlayer.audioContext.resume()
-      document.removeEventListener('touchstart', callback, true)
-      document.removeEventListener('mousedown', callback, true)
-      console.log('resumeAudioContext')
-    }
-    document.addEventListener('touchstart', callback, true)
-    document.addEventListener('mousedown', callback, true)
   }
 }

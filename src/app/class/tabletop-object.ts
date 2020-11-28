@@ -31,10 +31,10 @@ export class TabletopObject extends ObjectNode {
 
   // GameDataElement getter/setter
   get rootDataElement(): DataElement {
-    for (const node of this.children) {
-      if (node.getAttribute('name') === this.aliasName) return <DataElement>node
-    }
-    return null
+    const result = this.children.find((node) => {
+      return node.getAttribute('name') === this.aliasName
+    }) as DataElement
+    return result
   }
 
   get imageDataElement(): DataElement {

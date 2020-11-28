@@ -11,34 +11,6 @@ export class TextNote extends TabletopObject {
 
   @SyncVar() password = ''
 
-  get width(): number {
-    return this.getCommonValue('width', 1)
-  }
-
-  get height(): number {
-    return this.getCommonValue('height', 1)
-  }
-
-  get fontSize(): number {
-    return this.getCommonValue('fontsize', 1)
-  }
-
-  get title(): string {
-    return this.getCommonValue('title', '')
-  }
-
-  get text(): string {
-    return this.getCommonValue('text', '')
-  }
-
-  set text(text: string) {
-    this.setCommonValue('text', text)
-  }
-
-  toTopmost() {
-    moveToTopmost(this)
-  }
-
   static create(
     title: string,
     text: string,
@@ -73,5 +45,33 @@ export class TextNote extends TabletopObject {
     object.initialize()
 
     return object
+  }
+
+  get width(): number {
+    return this.getCommonValue('width', 1)
+  }
+
+  get height(): number {
+    return this.getCommonValue('height', 1)
+  }
+
+  get fontSize(): number {
+    return this.getCommonValue('fontsize', 1)
+  }
+
+  get title(): string {
+    return this.getCommonValue('title', '')
+  }
+
+  get text(): string {
+    return this.getCommonValue('text', '')
+  }
+
+  set text(text: string) {
+    this.setCommonValue('text', text)
+  }
+
+  toTopmost() {
+    moveToTopmost(this)
   }
 }

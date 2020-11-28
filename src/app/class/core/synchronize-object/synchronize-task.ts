@@ -28,6 +28,24 @@ export class SynchronizeTask {
 
   private constructor(readonly peerId: PeerId) {}
 
+  private static onDisconnect(peerId: PeerId) {
+    Array.from(SynchronizeTask.tasksMap.values()).forEach((tasks) => {
+      tasks.concat().forEach((task) => {
+        if (task.peerId === peerId) task.timeout()
+      })
+    })
+    if (SynchronizeTask.tasksMap.size < 1) EventSystem.unregister(SynchronizeTask.key)
+  }
+
+  private static onUpdate(identifier: ObjectIdentifier) {
+    if (!SynchronizeTask.tasksMap.has(identifier)) return
+    const tasks = SynchronizeTask.tasksMap.get(identifier)
+    tasks.concat().forEach((task) => {
+      task.onUpdate(identifier)
+    })
+    if (SynchronizeTask.tasksMap.size < 1) EventSystem.unregister(SynchronizeTask.key)
+  }
+
   static create(peerId: PeerId, requests: SynchronizeRequest[]): SynchronizeTask {
     if (SynchronizeTask.tasksMap.size < 1) {
       EventSystem.register(SynchronizeTask.key)
@@ -51,18 +69,19 @@ export class SynchronizeTask {
   private cancel() {
     if (this.timeoutTimer) this.timeoutTimer.clear()
     this.timeoutTimer = null
-    this.onsynchronize = this.onfinish = this.ontimeout = null
-
-    for (const request of this.requestMap.values()) {
+    this.ontimeout = null
+    this.onfinish = null
+    this.onsynchronize = null
+    Array.from(this.requestMap.values()).forEach((request) => {
       this.deleteTasksMap(request.identifier)
-    }
+    })
 
     this.requestMap.clear()
   }
 
   private initialize(requests: SynchronizeRequest[]) {
-    for (const request of requests) {
-      request.ttl--
+    requests.forEach((request) => {
+      request.ttl -= 1
       this.requestMap.set(request.identifier, request)
       let tasks: SynchronizeTask[] = SynchronizeTask.tasksMap.get(request.identifier)
       if (tasks == null) tasks = []
@@ -71,7 +90,7 @@ export class SynchronizeTask {
       const sendTo =
         this.peerId != null && request.holderIds.includes(this.peerId) ? this.peerId : null
       EventSystem.call('REQUEST_GAME_OBJECT', request.identifier, sendTo)
-    }
+    })
 
     if (this.requestMap.size < 1) {
       setTimeout(() => this.finish())
@@ -93,24 +112,6 @@ export class SynchronizeTask {
         Array.from(this.requestMap.values()).filter((request) => request.ttl >= 0),
       )
     this.finish()
-  }
-
-  private static onDisconnect(peerId: PeerId) {
-    for (const tasks of SynchronizeTask.tasksMap.values()) {
-      for (const task of tasks.concat()) {
-        if (task.peerId === peerId) task.timeout()
-      }
-    }
-    if (SynchronizeTask.tasksMap.size < 1) EventSystem.unregister(SynchronizeTask.key)
-  }
-
-  private static onUpdate(identifier: ObjectIdentifier) {
-    if (!SynchronizeTask.tasksMap.has(identifier)) return
-    const tasks = SynchronizeTask.tasksMap.get(identifier)
-    for (const task of tasks.concat()) {
-      task.onUpdate(identifier)
-    }
-    if (SynchronizeTask.tasksMap.size < 1) EventSystem.unregister(SynchronizeTask.key)
   }
 
   private onUpdate(identifier: ObjectIdentifier) {

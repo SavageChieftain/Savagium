@@ -24,6 +24,22 @@ export class DiceSymbol extends TabletopObject {
 
   @SyncVar() rotate = 0
 
+  static create(name: string, type: DiceType, size: number, identifier?: string): DiceSymbol {
+    const object: DiceSymbol = identifier ? new DiceSymbol(identifier) : new DiceSymbol()
+
+    object.createDataElements()
+    object.commonDataElement.appendChild(
+      DataElement.create('name', name, {}, `name_${object.identifier}`),
+    )
+    object.commonDataElement.appendChild(
+      DataElement.create('size', size, {}, `size_${object.identifier}`),
+    )
+
+    object.makeDiceFace(type, object.identifier)
+    object.initialize()
+    return object
+  }
+
   get name(): string {
     return this.getCommonValue('name', '')
   }
@@ -45,11 +61,8 @@ export class DiceSymbol extends TabletopObject {
   }
 
   get imageFile(): ImageFile {
-    return this.isVisible
-      ? this.getImageFile(this.face)
-      : this.faces.length
-      ? this.getImageFile(this.faces[0])
-      : null
+    const elseResult = this.faces.length ? this.getImageFile(this.faces[0]) : null
+    return this.isVisible ? this.getImageFile(this.face) : elseResult
   }
 
   get ownerName(): string {
@@ -99,6 +112,7 @@ export class DiceSymbol extends TabletopObject {
         break
       case DiceType.D10_10TIMES:
         faceGeneratorFunc = (index) => `${index + 1}0`
+        break
       case DiceType.D10:
         sided = 10
         break
@@ -113,7 +127,7 @@ export class DiceSymbol extends TabletopObject {
         break
     }
 
-    for (let i = 0; i < sided; i++) {
+    for (let i = 0; i < sided; i += 1) {
       const faceName = faceGeneratorFunc(i)
       const identifier = identifierSuffix != null ? `${faceName}_${identifierSuffix}` : null
       faces.push(DataElement.create(faceName, '', { type: 'image' }, identifier))
@@ -124,21 +138,5 @@ export class DiceSymbol extends TabletopObject {
     this.face = faces[0].name
 
     return faces
-  }
-
-  static create(name: string, type: DiceType, size: number, identifier?: string): DiceSymbol {
-    const object: DiceSymbol = identifier ? new DiceSymbol(identifier) : new DiceSymbol()
-
-    object.createDataElements()
-    object.commonDataElement.appendChild(
-      DataElement.create('name', name, {}, `name_${object.identifier}`),
-    )
-    object.commonDataElement.appendChild(
-      DataElement.create('size', size, {}, `size_${object.identifier}`),
-    )
-
-    object.makeDiceFace(type, object.identifier)
-    object.initialize()
-    return object
   }
 }

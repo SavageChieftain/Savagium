@@ -31,7 +31,7 @@ export class ChatTab extends ObjectNode implements InnerXml {
   onChildAdded(child: ObjectNode) {
     super.onChildAdded(child)
     if (child.parent === this && child instanceof ChatMessage && child.isDisplayable) {
-      this._unreadLength++
+      this._unreadLength += 1
       EventSystem.trigger('MESSAGE_ADDED', {
         tabIdentifier: this.identifier,
         messageIdentifier: child.identifier,
@@ -41,18 +41,18 @@ export class ChatTab extends ObjectNode implements InnerXml {
 
   addMessage(message: ChatMessageContext): ChatMessage {
     message.tabIdentifier = this.identifier
-
     const chat = new ChatMessage()
-    for (const key in message) {
-      if (key === 'identifier') continue
-      if (key === 'tabIdentifier') continue
+    Object.keys(message).forEach((key) => {
+      if (key === 'identifier') return
+      if (key === 'tabIdentifier') return
       if (key === 'text') {
         chat.value = message[key]
-        continue
+        return
       }
-      if (message[key] == null || message[key] === '') continue
+      if (message[key] == null || message[key] === '') return
       chat.setAttribute(key, message[key])
-    }
+    })
+
     chat.initialize()
     EventSystem.trigger('SEND_MESSAGE', {
       tabIdentifier: this.identifier,
@@ -68,10 +68,10 @@ export class ChatTab extends ObjectNode implements InnerXml {
 
   innerXml(): string {
     let xml = ''
-    for (const child of this.children) {
-      if (child instanceof ChatMessage && !child.isDisplayable) continue
+    this.children.forEach((child) => {
+      if (child instanceof ChatMessage && !child.isDisplayable) return
       xml += ObjectSerializer.instance.toXml(child)
-    }
+    })
     return xml
   }
 

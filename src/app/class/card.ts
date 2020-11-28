@@ -21,6 +21,39 @@ export class Card extends TabletopObject {
 
   @SyncVar() zindex = 0
 
+  static create(
+    name: string,
+    fornt: string,
+    back: string,
+    size: number = 2,
+    identifier?: string,
+  ): Card {
+    let object: Card = null
+
+    if (identifier) {
+      object = new Card(identifier)
+    } else {
+      object = new Card()
+    }
+    object.createDataElements()
+
+    object.commonDataElement.appendChild(
+      DataElement.create('name', name, {}, `name_${object.identifier}`),
+    )
+    object.commonDataElement.appendChild(
+      DataElement.create('size', size, {}, `size_${object.identifier}`),
+    )
+    object.imageDataElement.appendChild(
+      DataElement.create('front', fornt, { type: 'image' }, `front_${object.identifier}`),
+    )
+    object.imageDataElement.appendChild(
+      DataElement.create('back', back, { type: 'image' }, `back_${object.identifier}`),
+    )
+    object.initialize()
+
+    return object
+  }
+
   get isVisibleOnTable(): boolean {
     return this.location.name === 'table' && (!this.parentIsAssigned || this.parentIsDestroyed)
   }
@@ -82,38 +115,5 @@ export class Card extends TabletopObject {
 
   toTopmost() {
     moveToTopmost(this, ['card-stack'])
-  }
-
-  static create(
-    name: string,
-    fornt: string,
-    back: string,
-    size: number = 2,
-    identifier?: string,
-  ): Card {
-    let object: Card = null
-
-    if (identifier) {
-      object = new Card(identifier)
-    } else {
-      object = new Card()
-    }
-    object.createDataElements()
-
-    object.commonDataElement.appendChild(
-      DataElement.create('name', name, {}, `name_${object.identifier}`),
-    )
-    object.commonDataElement.appendChild(
-      DataElement.create('size', size, {}, `size_${object.identifier}`),
-    )
-    object.imageDataElement.appendChild(
-      DataElement.create('front', fornt, { type: 'image' }, `front_${object.identifier}`),
-    )
-    object.imageDataElement.appendChild(
-      DataElement.create('back', back, { type: 'image' }, `back_${object.identifier}`),
-    )
-    object.initialize()
-
-    return object
   }
 }

@@ -1,4 +1,6 @@
+/* eslint-disable prefer-destructuring */
 import { CSSNumber } from './css-number'
+// eslint-disable-next-line import/no-cycle
 import { IPoint2D, IPoint3D } from './transform'
 
 export interface IMatrix3D {
@@ -21,6 +23,8 @@ export interface IMatrix3D {
 }
 
 export class Matrix3D {
+  private static MATRIX3D = new Matrix3D()
+
   m11 = 1
 
   m12 = 0
@@ -53,8 +57,6 @@ export class Matrix3D {
 
   m44 = 1
 
-  constructor() {}
-
   static create(
     element: HTMLElement,
     style: CSSStyleDeclaration = null,
@@ -65,11 +67,61 @@ export class Matrix3D {
     return ret.identity()
   }
 
+  static makePosition(position: IPoint3D, ret = new Matrix3D()): Matrix3D {
+    ret.identity()
+    ret.setPosition(position)
+    return ret
+  }
+
+  static makePerspective(perspective: number, ret = new Matrix3D()): Matrix3D {
+    ret.identity()
+    ret.m34 = perspective ? -(1 / perspective) : 0
+    return ret
+  }
+
+  static multiply(a: IMatrix3D, b: IMatrix3D, ret: Matrix3D = new Matrix3D()): Matrix3D {
+    const m11 = a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31 + a.m14 * b.m41
+    const m12 = a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32 + a.m14 * b.m42
+    const m13 = a.m11 * b.m13 + a.m12 * b.m23 + a.m13 * b.m33 + a.m14 * b.m43
+    const m14 = a.m11 * b.m14 + a.m12 * b.m24 + a.m13 * b.m34 + a.m14 * b.m44
+    const m21 = a.m21 * b.m11 + a.m22 * b.m21 + a.m23 * b.m31 + a.m24 * b.m41
+    const m22 = a.m21 * b.m12 + a.m22 * b.m22 + a.m23 * b.m32 + a.m24 * b.m42
+    const m23 = a.m21 * b.m13 + a.m22 * b.m23 + a.m23 * b.m33 + a.m24 * b.m43
+    const m24 = a.m21 * b.m14 + a.m22 * b.m24 + a.m23 * b.m34 + a.m24 * b.m44
+    const m31 = a.m31 * b.m11 + a.m32 * b.m21 + a.m33 * b.m31 + a.m34 * b.m41
+    const m32 = a.m31 * b.m12 + a.m32 * b.m22 + a.m33 * b.m32 + a.m34 * b.m42
+    const m33 = a.m31 * b.m13 + a.m32 * b.m23 + a.m33 * b.m33 + a.m34 * b.m43
+    const m34 = a.m31 * b.m14 + a.m32 * b.m24 + a.m33 * b.m34 + a.m34 * b.m44
+    const m41 = a.m41 * b.m11 + a.m42 * b.m21 + a.m43 * b.m31 + a.m44 * b.m41
+    const m42 = a.m41 * b.m12 + a.m42 * b.m22 + a.m43 * b.m32 + a.m44 * b.m42
+    const m43 = a.m41 * b.m13 + a.m42 * b.m23 + a.m43 * b.m33 + a.m44 * b.m43
+    const m44 = a.m41 * b.m14 + a.m42 * b.m24 + a.m43 * b.m34 + a.m44 * b.m44
+
+    ret.m11 = m11
+    ret.m12 = m12
+    ret.m13 = m13
+    ret.m14 = m14
+    ret.m21 = m21
+    ret.m22 = m22
+    ret.m23 = m23
+    ret.m24 = m24
+    ret.m31 = m31
+    ret.m32 = m32
+    ret.m33 = m33
+    ret.m34 = m34
+    ret.m41 = m41
+    ret.m42 = m42
+    ret.m43 = m43
+    ret.m44 = m44
+
+    return ret
+  }
+
   setData(data: number[]): Matrix3D {
     if (data == null) return
 
     const l = data.length
-    if (l == 16) {
+    if (l === 16) {
       this.m11 = data[0]
       this.m12 = data[1]
       this.m13 = data[2]
@@ -86,7 +138,7 @@ export class Matrix3D {
       this.m42 = data[13]
       this.m43 = data[14]
       this.m44 = data[15]
-    } else if (l == 6) {
+    } else if (l === 6) {
       this.m11 = data[0]
       this.m12 = data[1]
       this.m13 = 0
@@ -103,7 +155,7 @@ export class Matrix3D {
       this.m42 = data[5]
       this.m43 = 0
       this.m44 = 1
-    } else if (l == 9) {
+    } else if (l === 9) {
       this.m11 = data[0]
       this.m12 = data[1]
       this.m13 = 0
@@ -122,6 +174,7 @@ export class Matrix3D {
       this.m44 = data[8]
     }
 
+    // eslint-disable-next-line consistent-return
     return this
   }
 
@@ -178,18 +231,18 @@ export class Matrix3D {
     let qz = z + this.m33
     let qw = w + this.m34
 
-    if (w == 0) w = 0.0001
+    if (w === 0) w = 0.0001
     x /= w
     y /= w
     z /= w
 
-    if (qw == 0) qw = 0.0001
+    if (qw === 0) qw = 0.0001
     qx /= qw
     qy /= qw
     qz /= qw
 
     const wz = qz - z
-    if (wz == 0) {
+    if (wz === 0) {
       ret.x = x
       ret.y = y
       ret.z = z
@@ -214,7 +267,7 @@ export class Matrix3D {
     let x = point.x * this.m11 + point.y * this.m21 + z * this.m31 + this.m41
     let y = point.x * this.m12 + point.y * this.m22 + z * this.m32 + this.m42
 
-    if (w == 0) w = 0.0001
+    if (w === 0) w = 0.0001
 
     x /= w
     y /= w
@@ -253,12 +306,6 @@ export class Matrix3D {
     return ret
   }
 
-  static makePosition(position: IPoint3D, ret = new Matrix3D()): Matrix3D {
-    ret.identity()
-    ret.setPosition(position)
-    return ret
-  }
-
   appendPosition(position: IPoint3D): Matrix3D
   appendPosition(x: number, y: number, z: number): Matrix3D
   appendPosition(...args: any[]): Matrix3D {
@@ -269,12 +316,6 @@ export class Matrix3D {
       position = { x: args[0], y: args[1], z: args[2], w: 1 }
     }
     return this.append(Matrix3D.makePosition(position, Matrix3D.MATRIX3D))
-  }
-
-  static makePerspective(perspective: number, ret = new Matrix3D()): Matrix3D {
-    ret.identity()
-    ret.m34 = perspective ? -(1 / perspective) : 0
-    return ret
   }
 
   appendPerspective(perspective: number): Matrix3D {
@@ -288,6 +329,7 @@ export class Matrix3D {
    * -> based on https://github.com/mrdoob/three.js/blob/master/src/math/Matrix4.js
    */
   invert(target?: Matrix3D): Matrix3D {
+    // eslint-disable-next-line no-param-reassign
     target = target || this
     const data: number[] = []
 
@@ -338,7 +380,7 @@ export class Matrix3D {
       n12 * n23 * n34
 
     const det = n11 * data[0] + n21 * data[1] + n31 * data[2] + n41 * data[3]
-    if (det == 0) {
+    if (det === 0) {
       console.warn('Can not invert matrix, determinant is 0')
       return this
     }
@@ -434,21 +476,21 @@ export class Matrix3D {
   }
 
   setCSS(cssString: string): Matrix3D {
-    if (!cssString || cssString == 'none') return this.identity()
+    if (!cssString || cssString === 'none') return this.identity()
     const trans: any = cssString
       .replace('matrix3d(', '')
       .replace('matrix(', '')
       .replace(')', '')
       .split(',')
     const l = trans.length
-    for (let i = 0; i < l; ++i) {
+    for (let i = 0; i < l; i += 1) {
       trans[i] = CSSNumber.parse(trans[i])
     }
     return this.setData(trans)
   }
 
   appendCSS(cssString: string, force2D: boolean = false): Matrix3D {
-    if (!cssString || cssString == 'none') return this
+    if (!cssString || cssString === 'none') return this
     if (force2D && cssString.indexOf('matrix3d') >= 0) {
       return this.append(Matrix3D.MATRIX3D.setCSS(cssString).flatten())
     }
@@ -465,44 +507,6 @@ export class Matrix3D {
     this.m24 = 0
     this.m43 = 0
     return this
-  }
-
-  static multiply(a: IMatrix3D, b: IMatrix3D, ret: Matrix3D = new Matrix3D()): Matrix3D {
-    const m11 = a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31 + a.m14 * b.m41
-    const m12 = a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32 + a.m14 * b.m42
-    const m13 = a.m11 * b.m13 + a.m12 * b.m23 + a.m13 * b.m33 + a.m14 * b.m43
-    const m14 = a.m11 * b.m14 + a.m12 * b.m24 + a.m13 * b.m34 + a.m14 * b.m44
-    const m21 = a.m21 * b.m11 + a.m22 * b.m21 + a.m23 * b.m31 + a.m24 * b.m41
-    const m22 = a.m21 * b.m12 + a.m22 * b.m22 + a.m23 * b.m32 + a.m24 * b.m42
-    const m23 = a.m21 * b.m13 + a.m22 * b.m23 + a.m23 * b.m33 + a.m24 * b.m43
-    const m24 = a.m21 * b.m14 + a.m22 * b.m24 + a.m23 * b.m34 + a.m24 * b.m44
-    const m31 = a.m31 * b.m11 + a.m32 * b.m21 + a.m33 * b.m31 + a.m34 * b.m41
-    const m32 = a.m31 * b.m12 + a.m32 * b.m22 + a.m33 * b.m32 + a.m34 * b.m42
-    const m33 = a.m31 * b.m13 + a.m32 * b.m23 + a.m33 * b.m33 + a.m34 * b.m43
-    const m34 = a.m31 * b.m14 + a.m32 * b.m24 + a.m33 * b.m34 + a.m34 * b.m44
-    const m41 = a.m41 * b.m11 + a.m42 * b.m21 + a.m43 * b.m31 + a.m44 * b.m41
-    const m42 = a.m41 * b.m12 + a.m42 * b.m22 + a.m43 * b.m32 + a.m44 * b.m42
-    const m43 = a.m41 * b.m13 + a.m42 * b.m23 + a.m43 * b.m33 + a.m44 * b.m43
-    const m44 = a.m41 * b.m14 + a.m42 * b.m24 + a.m43 * b.m34 + a.m44 * b.m44
-
-    ret.m11 = m11
-    ret.m12 = m12
-    ret.m13 = m13
-    ret.m14 = m14
-    ret.m21 = m21
-    ret.m22 = m22
-    ret.m23 = m23
-    ret.m24 = m24
-    ret.m31 = m31
-    ret.m32 = m32
-    ret.m33 = m33
-    ret.m34 = m34
-    ret.m41 = m41
-    ret.m42 = m42
-    ret.m43 = m43
-    ret.m44 = m44
-
-    return ret
   }
 
   public toString(fractionalDigits: number = 3): string {
@@ -522,6 +526,4 @@ export class Matrix3D {
       fractionalDigits,
     )}\tm34=${this.m34.toFixed(fractionalDigits)}\tm44=${this.m44.toFixed(fractionalDigits)}`
   }
-
-  private static MATRIX3D = new Matrix3D()
 }

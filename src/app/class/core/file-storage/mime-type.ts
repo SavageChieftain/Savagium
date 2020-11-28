@@ -32,16 +32,16 @@ export namespace MimeType {
   }
 
   export function type(fileName: string): string {
-    const ext = fileName.replace(/.*[\.\/\\]/, '').toLowerCase()
+    const regex = /.*[./\\]/
+    const ext = fileName.replace(regex, '').toLowerCase()
     return types[ext] ? types[ext] : ''
   }
 
   export function extension(mimeType: string): string {
-    for (const key in types) {
-      if (types[key] === mimeType) {
-        return key
-      }
-    }
-    return mimeType.split('/')[1]
+    return (
+      Object.keys(types).find((key) => {
+        return types[key] === mimeType
+      }) || mimeType.split('/')[1]
+    )
   }
 }

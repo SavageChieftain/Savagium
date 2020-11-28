@@ -1,4 +1,5 @@
 import { saveAs } from 'file-saver'
+// eslint-disable-next-line import/extensions
 import * as JSZip from 'jszip/dist/jszip.min.js'
 
 import { EventSystem } from '../system'
@@ -76,9 +77,12 @@ export class FileArchiver {
     this.load(files)
   }
 
-  async load(files: File[] | FileList | any) {
+  async load(files: File[])
+  async load(files: FileList)
+  async load(files: any) {
     const { length } = files
-    for (let i = 0; i < length; i++) {
+    console.log(files)
+    for (let i = 0; i < length; i += 1) {
       await this.handleImage(files[i])
       await this.handleAudio(files[i])
       await this.handleText(files[i])
@@ -133,7 +137,7 @@ export class FileArchiver {
     }
     const zipEntries = []
     zip.forEach((relativePath, zipEntry) => zipEntries.push(zipEntry))
-    for (const zipEntry of zipEntries) {
+    zipEntries.forEach(async (zipEntry) => {
       try {
         const arraybuffer = await zipEntry.async('arraybuffer')
         console.log(`${zipEntry.name} 解凍...`)
@@ -145,7 +149,7 @@ export class FileArchiver {
       } catch (reason) {
         console.warn(reason)
       }
-    }
+    })
   }
 
   async saveAsync(files: File[], zipName: string, updateCallback?: UpdateCallback): Promise<void>
@@ -155,7 +159,7 @@ export class FileArchiver {
 
     const zip = new JSZip()
     const { length } = files
-    for (let i = 0; i < length; i++) {
+    for (let i = 0; i < length; i += 1) {
       const file = files[i]
       zip.file(file.name, file)
     }

@@ -1,6 +1,8 @@
 import { EventSystem } from '../system'
 import { setZeroTimeout } from '../system/util/zero-timeout'
+// eslint-disable-next-line import/no-cycle
 import { GameObject, ObjectContext } from './game-object'
+// eslint-disable-next-line import/no-cycle
 import { Type } from './object-factory'
 
 type ObjectAliasName = string
@@ -124,9 +126,9 @@ export class ObjectStore {
 
     if (this.queueMap.has(context.identifier)) {
       const queue = this.queueMap.get(context.identifier)
-      for (const key in context) {
+      Object.keys(context).forEach((key) => {
         queue[key] = context[key]
-      }
+      })
       return
     }
     EventSystem.call('UPDATE_GAME_OBJECT', context)
@@ -148,9 +150,9 @@ export class ObjectStore {
 
   getCatalog(): CatalogItem[] {
     const catalog: CatalogItem[] = []
-    for (const object of this.identifierMap.values()) {
+    Array.from(this.identifierMap.values()).forEach((object) => {
       catalog.push({ identifier: object.identifier, version: object.version })
-    }
+    })
     return catalog
   }
 
@@ -181,15 +183,16 @@ export class ObjectStore {
 
     const entries = this.garbageMap.entries()
     while (checkLength < 1) {
-      checkLength--
+      checkLength -= 1
       const item = entries.next()
       if (item.done) break
 
       const identifier = item.value[0]
       const timeStamp = item.value[1]
 
-      if (timeStamp + ms < nowDate) continue
-      this.garbageMap.delete(identifier)
+      if (timeStamp + ms >= nowDate) {
+        this.garbageMap.delete(identifier)
+      }
     }
   }
 }

@@ -44,6 +44,10 @@ module.exports = {
         'no-unused-expressions': 'off',
         'import/prefer-default-export': 'off',
         'no-underscore-dangle': [0],
+        'no-param-reassign': ['error', { props: false }],
+        'max-classes-per-file': 'off',
+        'no-bitwise': 'off',
+        'no-return-await': 'off',
         '@angular-eslint/directive-selector': [
           'error',
           { type: 'attribute', prefix: 'app', style: 'camelCase' },

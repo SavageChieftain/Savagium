@@ -9,14 +9,14 @@ export interface Stackable extends TabletopObject {
 
 export function moveToTopmost(topmost: Stackable, otherRelatives: AliasName[] = []) {
   let objects: Stackable[] = ObjectStore.instance.getObjects(topmost.aliasName)
-  otherRelatives.forEach(
-    (aliasName) => (objects = objects.concat(ObjectStore.instance.getObjects(aliasName))),
-  )
+  otherRelatives.forEach((aliasName) => {
+    objects = objects.concat(ObjectStore.instance.getObjects(aliasName))
+  })
   objects = objects.filter((obj) => obj.isVisibleOnTable)
 
   let maxZindex = -1
   let hasConflict = false
-  for (let i = 0; i < objects.length; i++) {
+  for (let i = 0; i < objects.length; i += 1) {
     if (maxZindex === objects[i].zindex) {
       hasConflict = true
     } else if (maxZindex < objects[i].zindex) {
@@ -31,7 +31,7 @@ export function moveToTopmost(topmost: Stackable, otherRelatives: AliasName[] = 
   if (topmost.zindex < objects.length + 256) return
   objects.sort((a, b) => a.zindex - b.zindex)
 
-  for (let i = 0; i < objects.length; i++) {
+  for (let i = 0; i < objects.length; i += 1) {
     objects[i].zindex = i
   }
 }

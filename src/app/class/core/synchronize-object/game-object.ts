@@ -1,6 +1,9 @@
 import { UUID } from '../system/util/uuid'
+// eslint-disable-next-line import/no-cycle
 import { ObjectFactory } from './object-factory'
+// eslint-disable-next-line import/no-cycle
 import { ObjectSerializer } from './object-serializer'
+// eslint-disable-next-line import/no-cycle
 import { ObjectStore } from './object-store'
 
 export interface SyncData extends Object {
@@ -17,7 +20,7 @@ export interface ObjectContext {
 
 function deepCopy<T extends Object>(obj: T): T {
   const clone: any = {}
-  for (const key in obj) {
+  Object.keys(obj).forEach((key) => {
     if (typeof obj[key] === 'object') {
       if (Array.isArray(obj)) {
         clone[key] = JSON.parse(JSON.stringify(this.context.syncData))
@@ -27,7 +30,7 @@ function deepCopy<T extends Object>(obj: T): T {
     } else {
       clone[key] = obj[key]
     }
-  }
+  })
   return clone
 }
 

@@ -21,7 +21,7 @@ export class Database {
   }
 
   private openDB(dbName: string, version: number): Promise<IDBDatabase> {
-    return this.queue.add((resolve, reject) => {
+    return this.queue.add((resolve) => {
       console.log('openDB')
       const request = indexedDB.open(dbName, version)
       request.onerror = (event) => {
@@ -33,18 +33,18 @@ export class Database {
         // request.errorCode に対して行うこと!
         resolve()
       }
-      request.onblocked = (event) => {
+      request.onblocked = () => {
         console.warn('openDB onblocked')
         // 他のタブがデータベースを読み込んでいる場合は、処理を進める前に
         // それらを閉じなければなりません。
         alert('このサイトを開いている他のタブをすべて閉じてください!')
       }
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = () => {
         console.log('openDB onupgradeneeded')
         this.initializeDB(request.result)
         this.createStores()
       }
-      request.onsuccess = (event) => {
+      request.onsuccess = () => {
         console.log('openDB onsuccess')
         this.initializeDB(request.result)
         resolve()
@@ -61,7 +61,7 @@ export class Database {
     objectStore.createIndex('timestamp', 'timestamp', { unique: false })
     // データを追加する前に objectStore の作成を完了させるため、
     // transaction oncomplete を使用します。
-    objectStore.transaction.oncomplete = (event) => {
+    objectStore.transaction.oncomplete = () => {
       console.log('createStores oncomplete')
       // 新たに作成した objectStore に値を保存します。
       /*
@@ -78,7 +78,7 @@ export class Database {
     // 別のページがバージョン変更を求めた場合に、通知されるようにするためのハンドラを追加するようにしてください。
     // データベースを閉じなければなりません。データベースを閉じると、別のページがデータベースをアップグレードできます。
     // これを行わなければ、ユーザがタブを閉じるまでデータベースはアップグレードされません。
-    db.onversionchange = (event) => {
+    db.onversionchange = () => {
       console.warn('db.onversionchange.')
       db.close()
       alert('新しいバージョンのページが使用可能になりました。再読み込みしてください!')
@@ -94,12 +94,12 @@ export class Database {
   }
 
   addPeerHistory(myPeer: string, otherPeers: string[]) {
-    this.queue.add((resolve, reject) => {
+    this.queue.add((resolve) => {
       console.log('addPeerHistory')
       const transaction = this.db.transaction(['PeerHistory'], 'readwrite')
       const store = transaction.objectStore('PeerHistory')
 
-      transaction.oncomplete = (event) => {
+      transaction.oncomplete = () => {
         console.log('addPeerHistory done.', 'readwrite')
         resolve()
       }
@@ -120,10 +120,10 @@ export class Database {
   }
 
   deletePeerHistory(peerId: string) {
-    this.queue.add((resolve, reject) => {
+    this.queue.add((resolve) => {
       const transaction = this.db.transaction(['PeerHistory'], 'readwrite')
       const store = transaction.objectStore('PeerHistory')
-      transaction.oncomplete = (event) => {
+      transaction.oncomplete = () => {
         console.log('addPeerHistory done.', 'readwrite')
         resolve()
       }
@@ -138,14 +138,14 @@ export class Database {
   }
 
   getPeerHistory(): Promise<PeerHistory[]> {
-    return this.queue.add((resolve, reject) => {
+    return this.queue.add((resolve) => {
       console.log('getPeerHistory')
       const transaction = this.db.transaction(['PeerHistory'], 'readonly')
       const store = transaction.objectStore('PeerHistory')
       const request = store.openCursor()
       const history: PeerHistory[] = []
 
-      transaction.oncomplete = (event) => {
+      transaction.oncomplete = () => {
         console.log('getPeerHistory done.')
         resolve(history)
       }
@@ -160,7 +160,7 @@ export class Database {
         resolve(history)
       }
 
-      request.onsuccess = (event) => {
+      request.onsuccess = () => {
         const cursor: IDBCursorWithValue = request.result
         if (cursor) {
           console.log(`id:${cursor.key} value:`, cursor.value)

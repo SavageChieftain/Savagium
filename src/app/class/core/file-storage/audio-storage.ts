@@ -21,9 +21,9 @@ export class AudioStorage {
 
   get audios(): AudioFile[] {
     const audios: AudioFile[] = []
-    for (const identifier in this.hash) {
+    Object.keys(this.hash).forEach((identifier) => {
       audios.push(this.hash[identifier])
-    }
+    })
     return audios
   }
 
@@ -32,9 +32,9 @@ export class AudioStorage {
   }
 
   private destroy() {
-    for (const identifier in this.hash) {
+    Object.keys(this.hash).forEach((identifier) => {
       this.delete(identifier)
-    }
+    })
   }
 
   async addAsync(file: File): Promise<AudioFile>
@@ -72,12 +72,14 @@ export class AudioStorage {
   private update(audio: AudioFile): boolean
   private update(audio: AudioFileContext): boolean
   private update(audio: any): boolean {
+    /*
     let context: AudioFileContext
     if (audio instanceof AudioFile) {
       context = audio.toContext()
     } else {
       context = audio
     }
+    */
     const updateAudio: AudioFile = this.hash[audio.identifier]
     if (updateAudio) {
       updateAudio.apply(audio)
@@ -115,11 +117,11 @@ export class AudioStorage {
 
   getCatalog(): CatalogItem[] {
     const catalog: CatalogItem[] = []
-    for (const audio of AudioStorage.instance.audios) {
+    AudioStorage.instance.audios.forEach((audio) => {
       if (AudioState.COMPLETE <= audio.state) {
         catalog.push({ identifier: audio.identifier, state: audio.state })
       }
-    }
+    })
     return catalog
   }
 }

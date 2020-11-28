@@ -166,7 +166,6 @@ export class AppConfigService {
         root[key] = config[key]
       }
     }
-    console.log(root)
     return root
   }
 }

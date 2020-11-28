@@ -6,6 +6,29 @@ import { ImageContext, ImageFile, ImageState } from './image-file'
 import { CatalogItem, ImageStorage } from './image-storage'
 import { MimeType } from './mime-type'
 
+const convertUrlImage = (xmlElement: Element) => {
+  const urls: string[] = []
+
+  let imageElements = xmlElement.querySelectorAll('*[type="image"]')
+  for (let i = 0; i < imageElements.length; i += 1) {
+    const url = imageElements[i].innerHTML
+    if (!ImageStorage.instance.get(url) && MimeType.type(url).length > 0) {
+      urls.push(url)
+    }
+  }
+
+  imageElements = xmlElement.querySelectorAll('*[imageIdentifier]')
+  for (let i = 0; i < imageElements.length; i += 1) {
+    const url = imageElements[i].getAttribute('imageIdentifier')
+    if (!ImageStorage.instance.get(url) && MimeType.type(url).length > 0) {
+      urls.push(url)
+    }
+  }
+  urls.forEach((url) => {
+    ImageStorage.instance.add(url)
+  })
+}
+
 export class ImageSharingSystem {
   private static _instance: ImageSharingSystem
 
@@ -42,8 +65,7 @@ export class ImageSharingSystem {
 
         const otherCatalog: CatalogItem[] = event.data
         const request: CatalogItem[] = []
-
-        for (const item of otherCatalog) {
+        otherCatalog.forEach((item) => {
           let image: ImageFile = ImageStorage.instance.get(item.identifier)
           if (image === null) {
             image = ImageFile.createEmpty(item.identifier)
@@ -52,7 +74,7 @@ export class ImageSharingSystem {
           if (image.state < ImageState.COMPLETE && !this.receiveTaskMap.has(item.identifier)) {
             request.push({ identifier: item.identifier, state: image.state })
           }
-        }
+        })
 
         // Peer切断時などのエッジケースに対応する
         if (
@@ -74,14 +96,15 @@ export class ImageSharingSystem {
         const request: CatalogItem[] = event.data.identifiers
         const randomRequest: CatalogItem[] = []
 
-        for (const item of request) {
+        request.forEach((item) => {
           const image: ImageFile = ImageStorage.instance.get(item.identifier)
-          if (image && item.state < image.state)
+          if (image && item.state < image.state) {
             randomRequest.push({
               identifier: item.identifier,
               state: item.state,
             })
-        }
+          }
+        })
 
         if (
           this.isLimitSendTask() === false &&
@@ -96,17 +119,16 @@ export class ImageSharingSystem {
           this.startSendTask(updateImages, event.data.receiver)
         } else {
           // 中継
-          const { candidatePeers } = event.data
+          const { candidatePeers }: { candidatePeers: string[] } = event.data
           const index = candidatePeers.indexOf(Network.peerId)
           if (index > -1) candidatePeers.splice(index, 1)
-
-          for (const peer of candidatePeers) {
+          candidatePeers.forEach((peer) => {
             console.log(
               `REQUEST_FILE_RESOURE ImageStorageService Relay!!! ${peer} -> ${event.data.identifiers}`,
             )
             EventSystem.call(event, peer)
-            return
-          }
+            return true
+          })
           console.log(
             `REQUEST_FILE_RESOURE ImageStorageService あぶれた...${event.data.receiver}`,
             randomRequest.length,
@@ -114,16 +136,16 @@ export class ImageSharingSystem {
         }
       })
       .on('UPDATE_FILE_RESOURE', (event) => {
-        const { updateImages } = event.data
+        const { updateImages }: { updateImages: ImageContext[] } = event.data
         console.log(`UPDATE_FILE_RESOURE ImageStorageService ${event.sendFrom} -> `, updateImages)
-        for (const context of updateImages) {
+        updateImages.forEach((context) => {
           if (context.blob) context.blob = new Blob([context.blob], { type: context.type })
           if (context.thumbnail.blob)
             context.thumbnail.blob = new Blob([context.thumbnail.blob], {
               type: context.thumbnail.type,
             })
           ImageStorage.instance.add(context)
-        }
+        })
       })
       .on('START_FILE_TRANSMISSION', (event) => {
         console.log(`START_FILE_TRANSMISSION ${event.data.taskIdentifier}`)
@@ -149,19 +171,19 @@ export class ImageSharingSystem {
     EventSystem.call('START_FILE_TRANSMISSION', { taskIdentifier: identifier }, sendTo)
 
     /* hotfix issue #1 */
-    for (const context of updateImages) {
-      if (context.thumbnail.blob) {
-        context.thumbnail.blob = <any>(
-          await FileReaderUtil.readAsArrayBufferAsync(context.thumbnail.blob)
-        )
-      } else if (context.blob) {
-        context.blob = <any>await FileReaderUtil.readAsArrayBufferAsync(context.blob)
-      }
-    }
-    /* */
-
-    task.onfinish = (task, data) => {
-      this.stopSendTask(task.identifier)
+    await Promise.all(
+      updateImages.map(async (context) => {
+        if (context.thumbnail.blob) {
+          context.thumbnail.blob = <any>(
+            await FileReaderUtil.readAsArrayBufferAsync(context.thumbnail.blob)
+          )
+        } else if (context.blob) {
+          context.blob = <any>await FileReaderUtil.readAsArrayBufferAsync(context.blob)
+        }
+      }),
+    )
+    task.onfinish = (localTask) => {
+      this.stopSendTask(localTask.identifier)
       ImageStorage.instance.synchronize()
     }
 
@@ -171,11 +193,11 @@ export class ImageSharingSystem {
   private startReceiveTask(identifier: string) {
     const task = BufferSharingTask.createReceiveTask<ImageContext[]>(identifier)
     this.receiveTaskMap.set(identifier, task)
-    task.onfinish = (task, data) => {
-      this.stopReceiveTask(task.identifier)
+    task.onfinish = (localTask, data) => {
+      this.stopReceiveTask(localTask.identifier)
       if (data)
         EventSystem.trigger('UPDATE_FILE_RESOURE', {
-          identifier: task.identifier,
+          identifier: localTask.identifier,
           updateImages: data,
         })
       ImageStorage.instance.synchronize()
@@ -224,7 +246,7 @@ export class ImageSharingSystem {
     let byteSize = 0
 
     // Fisher-Yates
-    for (let i = catalog.length - 1; i >= 0; i--) {
+    for (let i = catalog.length - 1; i >= 0; i -= 1) {
       const rand = Math.floor(Math.random() * (i + 1))
       ;[catalog[i], catalog[rand]] = [catalog[rand], catalog[i]]
     }
@@ -235,7 +257,7 @@ export class ImageSharingSystem {
       return 0
     })
 
-    for (let i = 0; i < catalog.length; i++) {
+    for (let i = 0; i < catalog.length; i += 1) {
       const item: { identifier: string; state: number } = catalog[i]
       const image: ImageFile = ImageStorage.instance.get(item.identifier)
 
@@ -257,12 +279,8 @@ export class ImageSharingSystem {
         context.blob = image.blob //
         context.type = image.blob.type
       }
-
-      const size = context.blob
-        ? context.blob.size
-        : context.thumbnail.blob
-        ? context.thumbnail.blob.size
-        : 100
+      const elseResult = context.thumbnail.blob ? context.thumbnail.blob.size : 100
+      const size = context.blob ? context.blob.size : elseResult
 
       updateImages.push(context)
       byteSize += size
@@ -284,32 +302,9 @@ export class ImageSharingSystem {
   }
 
   private existsSendTask(peer: string): boolean {
-    for (const task of this.sendTaskMap.values()) {
-      if (task && task.sendTo === peer) return true
-    }
-    return false
-  }
-}
-
-function convertUrlImage(xmlElement: Element) {
-  const urls: string[] = []
-
-  let imageElements = xmlElement.querySelectorAll('*[type="image"]')
-  for (let i = 0; i < imageElements.length; i++) {
-    const url = imageElements[i].innerHTML
-    if (!ImageStorage.instance.get(url) && MimeType.type(url).length > 0) {
-      urls.push(url)
-    }
-  }
-
-  imageElements = xmlElement.querySelectorAll('*[imageIdentifier]')
-  for (let i = 0; i < imageElements.length; i++) {
-    const url = imageElements[i].getAttribute('imageIdentifier')
-    if (!ImageStorage.instance.get(url) && MimeType.type(url).length > 0) {
-      urls.push(url)
-    }
-  }
-  for (const url of urls) {
-    ImageStorage.instance.add(url)
+    const result = Array.from(this.sendTaskMap.values()).find((task) => {
+      return task && task.sendTo === peer
+    })
+    return Boolean(result)
   }
 }

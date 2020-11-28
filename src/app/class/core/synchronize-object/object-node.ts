@@ -1,5 +1,6 @@
 import { XmlUtil } from '../system/util/xml-util'
 import { Attributes } from './attributes'
+// eslint-disable-next-line import/no-cycle
 import { defineSyncObject as SyncObject, defineSyncVariable as SyncVar } from './decorator-core'
 import { GameObject, ObjectContext } from './game-object'
 import { InnerXml, ObjectSerializer, XmlAttributes } from './object-serializer'
@@ -7,6 +8,9 @@ import { ObjectStore } from './object-store'
 
 @SyncObject('node')
 export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
+  // TODO 名前 親Nodeの存在が未知の状態であるNode
+  private static unknownNodes: { [identifier: string]: ObjectNode[] } = {}
+
   @SyncVar() value: number | string = ''
 
   @SyncVar() protected attributes: Attributes = {}
@@ -57,17 +61,15 @@ export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
     return this._children.concat()
   }
 
-  // TODO 名前　親Nodeの存在が未知の状態であるNode
-  private static unknownNodes: { [identifier: string]: ObjectNode[] } = {}
-
   private needsSort = true
 
   // override
   destroy() {
     super.destroy()
-    for (const child of this._children.concat()) {
+    this._children.concat().forEach((child) => {
       child.destroy()
-    }
+    })
+
     this._children = []
   }
 
@@ -84,9 +86,11 @@ export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
   }
 
   // ObjectNode Lifecycle
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onChildAdded(child: ObjectNode) {}
 
   // ObjectNode Lifecycle
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onChildRemoved(child: ObjectNode) {}
 
   private _onChildAdded(child: ObjectNode) {
@@ -110,9 +114,9 @@ export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
   private initializeChildren() {
     if (ObjectNode.unknownNodes[this.identifier] == null) return
     const objects = ObjectNode.unknownNodes[this.identifier]
-    for (const object of objects) {
+    objects.forEach((object) => {
       if (object.parent === this) this.updateChildren(object)
-    }
+    })
     if (ObjectNode.unknownNodes[this.identifier]) {
       delete ObjectNode.unknownNodes[this.identifier]
     }
@@ -150,7 +154,7 @@ export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
 
   private updateIndexs() {
     const { children } = this
-    for (let i = 0; i < children.length; i++) {
+    for (let i = 0; i < children.length; i += 1) {
       children[i].majorIndex = i
       children[i].minorIndex = Math.random()
     }
@@ -251,9 +255,9 @@ export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
   innerXml(): string {
     let xml = ''
     xml += XmlUtil.encodeEntityReference(`${this.value}`)
-    for (const child of this.children) {
+    this.children.forEach((child) => {
       xml += ObjectSerializer.instance.toXml(child)
-    }
+    })
     return xml
   }
 
@@ -261,7 +265,7 @@ export class ObjectNode extends GameObject implements XmlAttributes, InnerXml {
     const { children } = element
     const { length } = children
     if (length > 0) {
-      for (let i = 0; i < length; i++) {
+      for (let i = 0; i < length; i += 1) {
         const child = ObjectSerializer.instance.parseXml(children[i])
         if (child instanceof ObjectNode) this.appendChild(child)
       }

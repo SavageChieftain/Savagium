@@ -16,6 +16,8 @@ export interface AudioFileContext {
 }
 
 export class AudioFile {
+  isHidden = false
+
   private context: AudioFileContext = {
     identifier: '',
     name: '',
@@ -23,36 +25,6 @@ export class AudioFile {
     type: '',
     url: '',
   }
-
-  get identifier(): string {
-    return this.context.identifier
-  }
-
-  get name(): string {
-    return this.context.name
-  }
-
-  get blob(): Blob {
-    return this.context.blob
-  }
-
-  get url(): string {
-    return this.context.url
-  }
-
-  get isReady(): boolean {
-    return AudioState.NULL < this.state
-  }
-
-  get state(): AudioState {
-    if (!this.url && !this.blob) return AudioState.NULL
-    if (this.url && !this.blob) return AudioState.URL
-    return AudioState.COMPLETE
-  }
-
-  isHidden = false
-
-  private constructor() {}
 
   static createEmpty(identifier: string): AudioFile {
     const audio = new AudioFile()
@@ -85,6 +57,7 @@ export class AudioFile {
     if (arg instanceof Blob) {
       return await AudioFile._createAsync(arg)
     }
+    return undefined
   }
 
   private static async _createAsync(blob: Blob, name?: string): Promise<AudioFile> {
@@ -100,6 +73,32 @@ export class AudioFile {
     if (!audio.context.name) audio.context.name = audio.context.identifier
 
     return audio
+  }
+
+  get identifier(): string {
+    return this.context.identifier
+  }
+
+  get name(): string {
+    return this.context.name
+  }
+
+  get blob(): Blob {
+    return this.context.blob
+  }
+
+  get url(): string {
+    return this.context.url
+  }
+
+  get isReady(): boolean {
+    return AudioState.NULL < this.state
+  }
+
+  get state(): AudioState {
+    if (!this.url && !this.blob) return AudioState.NULL
+    if (this.url && !this.blob) return AudioState.URL
+    return AudioState.COMPLETE
   }
 
   destroy() {

@@ -18,6 +18,27 @@ export class CardStack extends TabletopObject {
 
   @SyncVar() isShowTotal = true
 
+  static create(name: string, identifier?: string): CardStack {
+    let object: CardStack = null
+
+    if (identifier) {
+      object = new CardStack(identifier)
+    } else {
+      object = new CardStack()
+    }
+    object.createDataElements()
+    object.commonDataElement.appendChild(
+      DataElement.create('name', name, {}, `name_${object.identifier}`),
+    )
+    const cardRoot = new ObjectNode(`cardRoot_${object.identifier}`)
+    cardRoot.setAttribute('name', 'cardRoot')
+    cardRoot.initialize()
+    object.appendChild(cardRoot)
+    object.initialize()
+
+    return object
+  }
+
   get name(): string {
     return this.getCommonValue('name', '')
   }
@@ -32,10 +53,9 @@ export class CardStack extends TabletopObject {
   }
 
   private get cardRoot(): ObjectNode {
-    for (const node of this.children) {
-      if (node.getAttribute('name') === 'cardRoot') return node
-    }
-    return null
+    return this.children.find((node) => {
+      return node.getAttribute('name') === 'cardRoot'
+    })
   }
 
   get cards(): Card[] {
@@ -66,13 +86,13 @@ export class CardStack extends TabletopObject {
   }
 
   shuffle(): Card[] {
-    if (!this.cardRoot) return
+    if (!this.cardRoot) return undefined
     const { length } = this.cardRoot.children
-    for (const card of this.cards) {
+    this.cards.forEach((card) => {
       card.index = Math.random() * length
       card.rotate = Math.floor(Math.random() * 2) * 180
       this.setSamePositionFor(card)
-    }
+    })
     return this.cards
   }
 
@@ -89,12 +109,12 @@ export class CardStack extends TabletopObject {
 
   drawCardAll(): Card[] {
     const { cards } = this
-    for (const card of cards) {
+    cards.forEach((card) => {
       this.cardRoot.removeChild(card)
       card.rotate += this.rotate
       this.setSamePositionFor(card)
       if (card.rotate > 360) card.rotate -= 360
-    }
+    })
     return cards
   }
 
@@ -113,30 +133,30 @@ export class CardStack extends TabletopObject {
   }
 
   faceUpAll() {
-    for (const card of this.cards) {
+    this.cards.forEach((card) => {
       card.faceUp()
       this.setSamePositionFor(card)
-    }
+    })
   }
 
   faceDownAll() {
-    for (const card of this.cards) {
+    this.cards.forEach((card) => {
       card.faceDown()
       this.setSamePositionFor(card)
-    }
+    })
   }
 
   uprightAll() {
-    for (const card of this.cards) {
+    this.cards.forEach((card) => {
       card.rotate = 0
       this.setSamePositionFor(card)
-    }
+    })
   }
 
   unifyCardsSize(size: number): void {
-    for (const card of this.cards) {
+    this.cards.forEach((card) => {
       if (card.size !== size) card.size = size
-    }
+    })
   }
 
   putOnTop(card: Card): Card {
@@ -170,7 +190,9 @@ export class CardStack extends TabletopObject {
   setLocation(location: string) {
     super.setLocation(location)
     const { cards } = this
-    for (const card of cards) card.setLocation(location)
+    cards.forEach((card) => {
+      card.setLocation(location)
+    })
   }
 
   private setSamePositionFor(card: Card) {
@@ -178,26 +200,5 @@ export class CardStack extends TabletopObject {
     card.location.x = this.location.x
     card.location.y = this.location.y
     card.posZ = this.posZ
-  }
-
-  static create(name: string, identifier?: string): CardStack {
-    let object: CardStack = null
-
-    if (identifier) {
-      object = new CardStack(identifier)
-    } else {
-      object = new CardStack()
-    }
-    object.createDataElements()
-    object.commonDataElement.appendChild(
-      DataElement.create('name', name, {}, `name_${object.identifier}`),
-    )
-    const cardRoot = new ObjectNode(`cardRoot_${object.identifier}`)
-    cardRoot.setAttribute('name', 'cardRoot')
-    cardRoot.initialize()
-    object.appendChild(cardRoot)
-    object.initialize()
-
-    return object
   }
 }

@@ -60,23 +60,27 @@ export class ChatPalette extends ObjectNode {
     const limit = 128
     let loop = 0
     let isContinue = true
-    while (isContinue) {
-      loop++
-      isContinue = false
-      evaluate = evaluate.replace(/[{｛]\s*([^{}｛｝]+)\s*[}｝]/g, (match, name) => {
-        name = StringUtil.toHalfWidth(name)
-        console.log(name)
-        isContinue = true
-        for (const variable of this.paletteVariables) {
-          if (variable.name == name) return variable.value
-        }
-        if (extendVariables) {
-          const element = extendVariables.getFirstElementByName(name)
-          if (element)
-            return element.isNumberResource ? `${element.currentValue}` : `${element.value}`
-        }
-        return ''
+    const callback = (match, name) => {
+      const localName = StringUtil.toHalfWidth(name)
+      console.log(localName)
+      isContinue = true
+      const result = this.paletteVariables.find((variable) => {
+        return variable.name === localName
       })
+      if (result) {
+        return result.value
+      }
+      if (extendVariables) {
+        const element = extendVariables.getFirstElementByName(name)
+        if (element)
+          return element.isNumberResource ? `${element.currentValue}` : `${element.value}`
+      }
+      return ''
+    }
+    while (isContinue) {
+      loop += 1
+      isContinue = false
+      evaluate = evaluate.replace(/[{｛]\s*([^{}｛｝]+)\s*[}｝]/g, callback)
       if (limit < loop) isContinue = false
     }
     return evaluate
@@ -87,16 +91,15 @@ export class ChatPalette extends ObjectNode {
 
     this._paletteLines = []
     this._paletteVariables = []
-
-    for (const palette of this._palettes) {
+    this._palettes.forEach((palette) => {
       const variable = this.parseVariable(palette)
       if (variable) {
         this._paletteVariables.push(variable)
-        continue
+        return
       }
       const line: PaletteLine = { palette }
       this._paletteLines.push(line)
-    }
+    })
     this.isAnalized = true
   }
 

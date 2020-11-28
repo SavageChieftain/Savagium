@@ -24,7 +24,7 @@ export class ChatTabList extends ObjectNode implements InnerXml {
   addChatTab(...args: any[]) {
     let chatTab: ChatTab = null
     if (args[0] instanceof ChatTab) {
-      chatTab = args[0]
+      ;[chatTab] = args
     } else {
       const tabName: string = args[0]
       const identifier: string = args[1]
@@ -37,9 +37,9 @@ export class ChatTabList extends ObjectNode implements InnerXml {
 
   parseInnerXml(element: Element) {
     // XMLからの新規作成を許可せず、既存のオブジェクトを更新する
-    for (const child of ChatTabList.instance.children) {
+    ChatTabList.instance.children.forEach((child) => {
       child.destroy()
-    }
+    })
 
     const context = ChatTabList.instance.toContext()
     context.syncData = this.toContext().syncData

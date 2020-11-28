@@ -1,4 +1,4 @@
-import { ChatMessage, ChatMessageContext } from './chat-message'
+import { ChatMessage } from './chat-message'
 import { AudioFile } from './core/file-storage/audio-file'
 import { AudioPlayer } from './core/file-storage/audio-player'
 import { AudioStorage } from './core/file-storage/audio-storage'
@@ -41,6 +41,22 @@ export class PresetSound {
 
 @SyncObject('sound-effect')
 export class SoundEffect extends GameObject {
+  static play(identifier: string)
+  static play(audio: AudioFile)
+  static play(arg: any) {
+    let identifier = ''
+    if (typeof arg === 'string') {
+      identifier = arg
+    } else {
+      identifier = arg.identifier
+    }
+    SoundEffect._play(identifier)
+  }
+
+  private static _play(identifier: string) {
+    EventSystem.call('SOUND_EFFECT', identifier)
+  }
+
   // GameObject Lifecycle
   onStoreAdded() {
     super.onStoreAdded()
@@ -69,21 +85,5 @@ export class SoundEffect extends GameObject {
   play(audio: AudioFile)
   play(arg: any) {
     SoundEffect.play(arg)
-  }
-
-  static play(identifier: string)
-  static play(audio: AudioFile)
-  static play(arg: any) {
-    let identifier = ''
-    if (typeof arg === 'string') {
-      identifier = arg
-    } else {
-      identifier = arg.identifier
-    }
-    SoundEffect._play(identifier)
-  }
-
-  private static _play(identifier: string) {
-    EventSystem.call('SOUND_EFFECT', identifier)
   }
 }

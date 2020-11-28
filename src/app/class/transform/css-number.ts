@@ -1,35 +1,34 @@
 export namespace CSSNumber {
+  export function parse(value: any, defaultValue: number = 0): number {
+    const localValue = parseFloat(value)
+    if (Number.isNaN(localValue)) return defaultValue
+    return value
+  }
   export function relation(value: any, relativeSize: number, defaultValue: number = 0): number {
     if (typeof value === 'number') {
       return value
     }
     if (typeof value === 'string') {
-      value = (<string>value).trim().toLowerCase()
-      if (value.indexOf('%') > 0)
-        return (parse(value.replace('%', ''), defaultValue) / 100) * relativeSize
-      if (value.indexOf('px') > 0 || value.indexOf('pt') > 0)
-        return parse(value.replace('px', ''), defaultValue)
-      if (value.indexOf('vw') > 0)
-        return (parse(value.replace('vw', ''), defaultValue) / 100) * window.innerWidth
-      if (value.indexOf('vh') > 0)
-        return (parse(value.replace('vh', ''), defaultValue) / 100) * window.innerHeight
-      if (value.indexOf('vm') > 0)
+      const localValue = (<string>value).trim().toLowerCase()
+      if (localValue.indexOf('%') > 0)
+        return (parse(localValue.replace('%', ''), defaultValue) / 100) * relativeSize
+      if (localValue.indexOf('px') > 0 || localValue.indexOf('pt') > 0)
+        return parse(localValue.replace('px', ''), defaultValue)
+      if (localValue.indexOf('vw') > 0)
+        return (parse(localValue.replace('vw', ''), defaultValue) / 100) * window.innerWidth
+      if (localValue.indexOf('vh') > 0)
+        return (parse(localValue.replace('vh', ''), defaultValue) / 100) * window.innerHeight
+      if (localValue.indexOf('vm') > 0)
         return (
-          (parse(value.replace('vm', ''), defaultValue) / 100) *
+          (parse(localValue.replace('vm', ''), defaultValue) / 100) *
           Math.min(window.innerWidth, window.innerHeight)
         )
-      if (value.indexOf('em') > 0) return parse(value.replace('em', ''), defaultValue)
-      if (value === 'top' || value === 'left') return 0
-      if (value === 'center' || value === 'middle') return relativeSize * 0.5
-      if (value === 'bottom' || value === 'right') return relativeSize
+      if (localValue.indexOf('em') > 0) return parse(localValue.replace('em', ''), defaultValue)
+      if (localValue === 'top' || localValue === 'left') return 0
+      if (localValue === 'center' || localValue === 'middle') return relativeSize * 0.5
+      if (localValue === 'bottom' || localValue === 'right') return relativeSize
       return defaultValue
     }
     return defaultValue
-  }
-
-  export function parse(value: any, defaultValue: number = 0): number {
-    value = parseFloat(value)
-    if (isNaN(value)) return defaultValue
-    return value
   }
 }

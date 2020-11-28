@@ -19,9 +19,9 @@ export class ImageStorage {
 
   get images(): ImageFile[] {
     const images: ImageFile[] = []
-    for (const identifier in this.imageHash) {
+    Object.keys(this.imageHash).forEach((identifier) => {
       images.push(this.imageHash[identifier])
-    }
+    })
     return images
   }
 
@@ -32,9 +32,9 @@ export class ImageStorage {
   }
 
   private destroy() {
-    for (const identifier in this.imageHash) {
+    Object.keys(this.imageHash).forEach((identifier) => {
       this.delete(identifier)
-    }
+    })
   }
 
   async addAsync(file: File): Promise<ImageFile>
@@ -72,12 +72,6 @@ export class ImageStorage {
   private update(image: ImageFile): boolean
   private update(image: ImageContext): boolean
   private update(image: any): boolean {
-    let context: ImageContext
-    if (image instanceof ImageFile) {
-      context = image.toContext()
-    } else {
-      context = image
-    }
     const updatingImage: ImageFile = this.imageHash[image.identifier]
     if (updatingImage) {
       updatingImage.apply(image)
@@ -115,11 +109,11 @@ export class ImageStorage {
 
   getCatalog(): CatalogItem[] {
     const catalog: CatalogItem[] = []
-    for (const image of this.images) {
+    this.images.forEach((image) => {
       if (ImageState.COMPLETE <= image.state) {
         catalog.push({ identifier: image.identifier, state: image.state })
       }
-    }
+    })
     return catalog
   }
 }

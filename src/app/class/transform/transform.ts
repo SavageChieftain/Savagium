@@ -1,4 +1,5 @@
 import { CSSNumber } from './css-number'
+// eslint-disable-next-line import/no-cycle
 import { Matrix3D } from './matrix-3d'
 
 export interface IPoint2D {
@@ -69,6 +70,7 @@ export class Transform {
     this.extract(this, this.sceneTransform)
     this.sceneTransform.invert(this.inverseSceneTransform)
 
+    // eslint-disable-next-line consistent-return
     return this
   }
 
@@ -121,12 +123,14 @@ export class Transform {
   }
 
   private extractMatrix(node: HTMLElement, matrix: Matrix3D = null): Matrix3D {
+    // eslint-disable-next-line no-param-reassign
     if (!matrix) matrix = new Matrix3D()
     if (!node) return matrix
 
     const element: HTMLElement = node
     const style: CSSStyleDeclaration = window.getComputedStyle(node)
 
+    // eslint-disable-next-line eqeqeq
     if (style.transform != 'none') {
       const origin = style.transformOrigin ? style.transformOrigin.split(' ') : []
       const originX = CSSNumber.relation(origin[0], element.offsetWidth, element.offsetWidth * 0.5)
@@ -171,22 +175,30 @@ export class Transform {
     return matrix
   }
 
+  private createXElseResult(node) {
+    if (node.parentElement === node.offsetParent) {
+      return node.offsetLeft
+    }
+    if (node.parentElement.offsetParent === node.offsetParent) {
+      return node.offsetLeft - node.parentElement.offsetLeft
+    }
+    return 0
+  }
+
+  private createYElseResult(node) {
+    if (node.parentElement === node.offsetParent) {
+      return node.offsetTop
+    }
+    if (node.parentElement.offsetParent === node.offsetParent) {
+      return node.offsetTop - node.parentElement.offsetTop
+    }
+    return 0
+  }
+
   private getPosition(node: HTMLElement): IPoint2D {
     const ret: IPoint2D = { x: 0, y: 0 }
-    ret.x = !node.offsetParent
-      ? node.offsetLeft
-      : node.parentElement === node.offsetParent
-      ? node.offsetLeft
-      : node.parentElement.offsetParent === node.offsetParent
-      ? node.offsetLeft - node.parentElement.offsetLeft
-      : 0
-    ret.y = !node.offsetParent
-      ? node.offsetTop
-      : node.parentElement === node.offsetParent
-      ? node.offsetTop
-      : node.parentElement.offsetParent === node.offsetParent
-      ? node.offsetTop - node.parentElement.offsetTop
-      : 0
+    ret.x = !node.offsetParent ? node.offsetLeft : this.createXElseResult(node)
+    ret.y = !node.offsetParent ? node.offsetTop : this.createYElseResult(node)
 
     ret.x += node.offsetParent ? node.offsetParent.clientLeft : 0
     ret.y += node.offsetParent ? node.offsetParent.clientTop : 0
