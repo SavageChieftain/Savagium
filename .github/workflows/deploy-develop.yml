@@ -26,6 +26,9 @@ jobs:
       - name: Replace Config Setting
         run: sed -i -e 's/#ここにSkywayのAPIKeyを入力してください/${{ secrets.SKYWAY_API_KEY_DEVELOP }}/g' ./src/assets/config.yml
 
+      - name: Replace index.html version info
+        run: sed -i -e 's/<title>.*<\/title>/<title>Savagium 開発版<\/title>/g' ./src/index.html
+
       - name: Build Application
         run: npx ng build --prod
 
