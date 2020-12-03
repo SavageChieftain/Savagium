@@ -1,5 +1,5 @@
-<div class="table" [ngClass]="{ 'direct-message': isDirect }">
-  <div class="table-row image-wrapper">
+<div class="table chat" [ngClass]="{ 'direct-message': isDirect }">
+  <div class="table-row chat image-wrapper">
     <div class="table-cell imagebox chat">
       <img
         *ngIf="0 < imageFile.url.length"
@@ -8,7 +8,7 @@
       />
     </div>
   </div>
-  <div class="table-row">
+  <div class="table-row chat">
     <div class="table-cell chat">
       <ng-select
         *ngIf="onlyCharacters === false"
