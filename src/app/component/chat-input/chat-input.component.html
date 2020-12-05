@@ -61,11 +61,11 @@
       <form>
         <textarea
           class="chat-input"
-          placeholder="Enterで改行 Shift + Enterで送信"
+          placeholder="Enterで送信 Shift + Enterで改行"
           [(ngModel)]="text"
           [ngModelOptions]="{ standalone: true }"
           (input)="onInput()"
-          (keydown.shift.enter)="sendChat($event)"
+          (keydown.enter)="sendChat($event)"
           rows="4"
           style="width: 100%"
           #textArea
